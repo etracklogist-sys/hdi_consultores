@@ -69,7 +69,10 @@ def run_migrations_online() -> None:
 
     """
     from sqlalchemy import create_engine
-    connectable = create_engine(settings.DATABASE_URL)
+    import os
+    db_url = os.getenv("DATABASE_URL", settings.DATABASE_URL)
+    print(f"ALEMBIC IS TRYING TO CONNECT TO: {db_url}")
+    connectable = create_engine(db_url)
 
     with connectable.connect() as connection:
         context.configure(
