@@ -1,0 +1,49 @@
+# ─── Variables de entorno (secretos) ─────────────────────────
+.env
+.env.local
+.env.production
+
+# ─── Base de datos local (SQLite, archivos temporales) ────────
+*.db
+*.sqlite
+*.sqlite3
+
+# ─── Python ───────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ─── Logs y archivos de debug ────────────────────────────────
+*.log
+*.txt
+!README.md
+alembic.log
+debug_out.txt
+debug_real.txt
+alembic_err.txt
+alembic_error.txt
+pragma.txt
+
+# ─── Scripts de desarrollo/debug (no van a prod) ─────────────
+debug_cert.py
+alembic_dump.py
+schema_dump.py
+migrate_db.py
+reset_db.py
+test_pdf.py
+
+# ─── IDEs ─────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo

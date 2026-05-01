@@ -1,0 +1,16 @@
+# ─── Entornos virtuales ───────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ─── Archivos temporales y de debug ──────────────────────────
+err.txt
+planavi1
+validation_package.md
+*.log
+
+# ─── OS ──────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
