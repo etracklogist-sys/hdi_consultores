@@ -70,6 +70,9 @@ def run_migrations_online() -> None:
     """
     from sqlalchemy import create_engine
     import os
+    print(f"=== DEBUG: TODAS LAS VARIABLES DE ENTORNO EN RAILWAY ===")
+    print(list(os.environ.keys()))
+    print(f"========================================================")
     db_url = os.getenv("DATABASE_URL", settings.DATABASE_URL)
     print(f"ALEMBIC IS TRYING TO CONNECT TO: {db_url}")
     connectable = create_engine(db_url)
