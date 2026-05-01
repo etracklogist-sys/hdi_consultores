@@ -36,12 +36,26 @@ class Settings(BaseSettings):
     ENV: str = "development" # o "production"
     
     # CORS: en desarrollo incluye localhost, en producción setear solo la URL del frontend
-    BACKEND_CORS_ORIGINS: list[str] = [
+    BACKEND_CORS_ORIGINS: list[str] | str = [
         "http://localhost:5173",
         "http://localhost:3000",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:3000",
     ]
+
+    from pydantic import field_validator
+    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
+    @classmethod
+    def assemble_cors_origins(cls, v: str | list[str]) -> list[str]:
+        if isinstance(v, str):
+            if v.startswith("["):
+                import json
+                try:
+                    return json.loads(v)
+                except Exception:
+                    pass
+            return [i.strip() for i in v.split(",") if i.strip()]
+        return v
 
     class Config:
         env_file = ".env"
