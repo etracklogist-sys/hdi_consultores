@@ -3,18 +3,20 @@ from pydantic_settings import BaseSettings
 from typing import Optional
 
 # Helpers para leer la DB de Railway automáticamente
+def format_db_url(url: str | None) -> str | None:
+    if url and url.startswith("mysql://"):
+        return url.replace("mysql://", "mysql+pymysql://", 1)
+    return url
+
 def get_db_url():
-    # 1. Si pusiste DATABASE_URL a mano
-    db_url = os.getenv("DATABASE_URL")
+    # 1. Si pusiste DATABASE_URL a mano (o por Reference Variable)
+    db_url = format_db_url(os.getenv("DATABASE_URL"))
     if db_url:
         return db_url
     
     # 2. Si Railway inyectó MYSQL_URL automáticamente
-    mysql_url = os.getenv("MYSQL_URL")
+    mysql_url = format_db_url(os.getenv("MYSQL_URL"))
     if mysql_url:
-        # Reemplazar mysql:// por mysql+pymysql://
-        if mysql_url.startswith("mysql://"):
-            return mysql_url.replace("mysql://", "mysql+pymysql://", 1)
         return mysql_url
         
     # 3. Fallback local
