@@ -81,3 +81,39 @@ def startup_auto_activation():
         logger.error(f"[STARTUP] Auto-activation failed (non-fatal): {e}")
     finally:
         db.close()
+
+# --- Startup Seed Admin ---
+@app.on_event("startup")
+def startup_seed_admin():
+    """
+    Ensure the default admin user exists on every server start.
+    Idempotent — updates the existing user if already present.
+    """
+    import bcrypt
+    from app.models.domain import UsuarioConsultora
+    db = SessionLocal()
+    try:
+        email = "admin@hdiconsultores.com"
+        existing = db.query(UsuarioConsultora).filter(
+            UsuarioConsultora.email == email
+        ).first()
+        if not existing:
+            hashed = bcrypt.hashpw("Admin2025!".encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+            nuevo = UsuarioConsultora(
+                nombre="Administrador HDI",
+                email=email,
+                hashed_password=hashed,
+                rol="ADMIN",
+                uid_firebase=None,
+            )
+            db.add(nuevo)
+            db.commit()
+            logger.info(f"[STARTUP] Admin user created: {email}")
+        else:
+            logger.info(f"[STARTUP] Admin user already exists: {email}")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"[STARTUP] Seed admin failed (non-fatal): {e}")
+    finally:
+        db.close()
+
