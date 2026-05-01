@@ -3,7 +3,7 @@
 .env.local
 .env.production
 
-# ─── Base de datos local (SQLite, archivos temporales) ────────
+# ─── Base de datos local ──────────────────────────────────────
 *.db
 *.sqlite
 *.sqlite3
@@ -24,17 +24,17 @@ build/
 .ruff_cache/
 
 # ─── Logs y archivos de debug ────────────────────────────────
+# IMPORTANTE: no usar *.txt aquí — ignoraría requirements.txt
 *.log
-*.txt
-!README.md
 alembic.log
-debug_out.txt
-debug_real.txt
 alembic_err.txt
 alembic_error.txt
+debug_out.txt
+debug_real.txt
 pragma.txt
+err.txt
 
-# ─── Scripts de desarrollo/debug (no van a prod) ─────────────
+# ─── Scripts de desarrollo (no van a prod) ───────────────────
 debug_cert.py
 alembic_dump.py
 schema_dump.py
