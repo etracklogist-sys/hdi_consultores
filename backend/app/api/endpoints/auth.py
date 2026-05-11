@@ -15,7 +15,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 class DniAccessRequest(BaseModel):
     dni: str
-    empresa_id: int
+    empresa_id: int | None = None
     email: str | None = None
 
 class AdminLoginRequest(BaseModel):
@@ -27,15 +27,20 @@ class AdminLoginRequest(BaseModel):
 @router.post("/dni-access")
 def dni_access(req: DniAccessRequest, db: Session = Depends(get_db)):
     input_dni = str(req.dni).strip()
-    input_empresa_id = int(req.empresa_id)
 
-    empleado = db.query(Empleado).filter(
-        Empleado.dni == input_dni,
-        Empleado.cliente_id == input_empresa_id
-    ).first()
+    query = db.query(Empleado).filter(Empleado.dni == input_dni)
+    if req.empresa_id:
+        query = query.filter(Empleado.cliente_id == int(req.empresa_id))
+        
+    empleados = query.all()
 
-    if not empleado:
-        raise HTTPException(status_code=401, detail="DNI o Código de Empresa incorrecto")
+    if not empleados:
+        raise HTTPException(status_code=401, detail="DNI incorrecto o no registrado")
+        
+    if len(empleados) > 1 and not req.empresa_id:
+        raise HTTPException(status_code=400, detail="El DNI está registrado en múltiples empresas. Contacte al administrador.")
+
+    empleado = empleados[0]
 
     # Validación opcional por email
     if req.email and empleado.email and req.email.strip().lower() != empleado.email.strip().lower():

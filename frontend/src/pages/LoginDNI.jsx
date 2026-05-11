@@ -4,15 +4,14 @@ import { authService } from '../services/authService';
 
 export default function LoginDNI() {
   const [dni, setDni] = useState('');
-  const [empresaId, setEmpresaId] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (!dni.trim() || !empresaId.trim()) {
-      setError('Debes ingresar tu DNI y el código de tu empresa.');
+    if (!dni.trim()) {
+      setError('Debes ingresar tu DNI.');
       return;
     }
 
@@ -21,7 +20,7 @@ export default function LoginDNI() {
 
     try {
       // Simulate backend auth check
-      await authService.loginDNI(dni, empresaId);
+      await authService.loginDNI(dni, null);
       navigate('/empleado'); // redirect to portal on success
     } catch (err) {
       setError(err.message || 'Error de autenticación. Verifica tus datos.');
@@ -174,34 +173,16 @@ export default function LoginDNI() {
 
           <form onSubmit={handleLogin}>
             <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.35rem', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>
-                Documento de Identidad (DNI)
-              </label>
-              <input 
-                type="text" 
-                placeholder="Ej: 12345678" 
-                value={dni} 
-                onChange={e => setDni(e.target.value)} 
-                disabled={loading}
+              <label htmlFor="dni" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#1E293B', fontSize: '0.95rem' }}>DNI</label>
+              <input
+                type="text"
+                id="dni"
+                value={dni}
+                onChange={(e) => setDni(e.target.value)}
                 className="login-dni-input"
+                placeholder="Ingresa tu DNI sin puntos"
+                required
               />
-            </div>
-
-            <div style={{ marginBottom: '2.5rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.35rem', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>
-                ID de Empresa Asignada
-              </label>
-              <input 
-                type="number" 
-                placeholder="Ej: 1" 
-                value={empresaId} 
-                onChange={e => setEmpresaId(e.target.value)} 
-                disabled={loading}
-                className="login-dni-input"
-              />
-              <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0.4rem 0 0 0', fontWeight: 500, lineHeight: 1.4 }}>
-                Ingrese el número de empresa asignado (por ejemplo: 1). No use el ID interno del empleado.
-              </p>
             </div>
 
             <button 

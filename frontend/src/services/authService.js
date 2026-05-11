@@ -4,13 +4,15 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
 export const authService = {
   loginDNI: async (dni, empresaId) => {
+    const payload = { dni: dni.trim() };
+    if (empresaId) {
+      payload.empresa_id = parseInt(empresaId, 10);
+    }
+    
     const response = await fetch(`${API_URL}/auth/dni-access`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        dni: dni.trim(),
-        empresa_id: parseInt(empresaId, 10)
-      })
+      body: JSON.stringify(payload)
     });
 
     if (!response.ok) {
