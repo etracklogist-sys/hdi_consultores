@@ -21,14 +21,20 @@ def get_current_empleado(current_uid: str = Depends(get_current_user_uid), db: S
     if not current_uid:
         raise HTTPException(status_code=401, detail="No autenticado")
         
+    empleado = None
     if str(current_uid).startswith("EMP-"):
         try:
             emp_id = int(str(current_uid).replace("EMP-", ""))
-            return db.query(Empleado).filter(Empleado.id == emp_id).first()
+            empleado = db.query(Empleado).filter(Empleado.id == emp_id).first()
         except:
             pass
-            
-    return db.query(Empleado).filter(Empleado.uid_firebase == current_uid).first()
+    else:
+        empleado = db.query(Empleado).filter(Empleado.uid_firebase == current_uid).first()
+        
+    if not empleado:
+        raise HTTPException(status_code=401, detail="Empleado no encontrado o sesión expirada")
+        
+    return empleado
 
 class EmpleadoCreate(BaseModel):
     nombre_completo: str
@@ -483,9 +489,6 @@ def map_asignacion_to_ui(asig: AsignacionCapacitacion, db: Session):
 
 @employee_router.get("/me/capacitaciones")
 def get_my_capacitaciones(empleado: Empleado = Depends(get_current_empleado), db: Session = Depends(get_db)):
-    if not empleado:
-        raise HTTPException(status_code=404, detail="Empleado no localizado")
-        
     # Employees see: ACTIVA (in-progress), FINALIZADA (completed), and legacy CERRADA data
     # They do NOT see PROGRAMADA or CANCELADA assignments
     asignaciones = db.query(AsignacionCapacitacion).outerjoin(CapacitacionProgramada).filter(
@@ -500,9 +503,6 @@ def get_my_capacitaciones(empleado: Empleado = Depends(get_current_empleado), db
 
 @employee_router.get("/me/progreso")
 def get_my_progreso(empleado: Empleado = Depends(get_current_empleado), db: Session = Depends(get_db)):
-    if not empleado:
-        raise HTTPException(status_code=404, detail="Empleado no localizado")
-        
     total_asignadas = db.query(AsignacionCapacitacion).filter(
         AsignacionCapacitacion.empleado_id == empleado.id
     ).count()
@@ -532,9 +532,6 @@ def get_my_progreso(empleado: Empleado = Depends(get_current_empleado), db: Sess
 
 @employee_router.get("/me/certificados")
 def get_my_certificados(empleado: Empleado = Depends(get_current_empleado), db: Session = Depends(get_db)):
-    if not empleado:
-        raise HTTPException(status_code=404, detail="Empleado no localizado")
-        
     certs = db.query(Certificado).filter(Certificado.empleado_id == empleado.id).all()
     
     res = []
@@ -554,9 +551,6 @@ def get_my_certificados(empleado: Empleado = Depends(get_current_empleado), db: 
 @employee_router.post("/me/capacitaciones/{asignacion_id}/mark-material-viewed")
 def mark_material_viewed(asignacion_id: int, empleado: Empleado = Depends(get_current_empleado), db: Session = Depends(get_db)):
     """Mark that the employee has viewed the training materials. Does NOT complete the training."""
-    if not empleado:
-        raise HTTPException(status_code=404, detail="Empleado no localizado")
-    
     asig = db.query(AsignacionCapacitacion).filter(
         AsignacionCapacitacion.id == asignacion_id,
         AsignacionCapacitacion.empleado_id == empleado.id
@@ -577,9 +571,6 @@ def mark_material_viewed(asignacion_id: int, empleado: Empleado = Depends(get_cu
 @employee_router.post("/me/capacitaciones/{asignacion_id}/mark-completed")
 def mark_completed(asignacion_id: int, empleado: Empleado = Depends(get_current_empleado), db: Session = Depends(get_db)):
     """Mark training as completed manually. Only for virtual trainings without evaluation."""
-    if not empleado:
-        raise HTTPException(status_code=404, detail="Empleado no localizado")
-    
     asig = db.query(AsignacionCapacitacion).filter(
         AsignacionCapacitacion.id == asignacion_id,
         AsignacionCapacitacion.empleado_id == empleado.id
@@ -618,9 +609,6 @@ class FirmaRequest(BaseModel):
 @employee_router.post("/me/firma")
 def upload_firma(req: FirmaRequest, empleado: Empleado = Depends(get_current_empleado), db: Session = Depends(get_db)):
     """Upload or update the employee's digital signature."""
-    if not empleado:
-        raise HTTPException(status_code=404, detail="Empleado no localizado")
-    
     empleado.firma_base64 = req.firma_base64
     db.commit()
     return {"message": "Firma guardada correctamente"}
@@ -628,8 +616,5 @@ def upload_firma(req: FirmaRequest, empleado: Empleado = Depends(get_current_emp
 @employee_router.get("/me/firma")
 def get_firma(empleado: Empleado = Depends(get_current_empleado), db: Session = Depends(get_db)):
     """Get the employee's current digital signature."""
-    if not empleado:
-        raise HTTPException(status_code=404, detail="Empleado no localizado")
-    
     return {"firma_base64": empleado.firma_base64}
 
