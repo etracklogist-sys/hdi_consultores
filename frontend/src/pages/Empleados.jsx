@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { authFetch } from '../utils/apiClient';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import ImportEmpleadosModal from '../components/ImportEmpleadosModal';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
@@ -12,6 +13,7 @@ export default function Empleados() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editId, setEditId] = useState(null);
   const [formData, setFormData] = useState({ nombre_completo: '', email: '', cliente_id: '', dni: '', activo: true, area_id: '' });
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const filterClienteId = searchParams.get('cliente_id');
@@ -116,7 +118,12 @@ export default function Empleados() {
             {filterClienteName ? `Empleados de ${filterClienteName}` : 'Gestión de Empleados'}
           </h2>
         </div>
-        <button className="btn btn-primary" onClick={openCreateModal}>+ Ingresar Empleado</button>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button className="btn btn-outline" onClick={() => setIsImportOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            📥 Importar Excel
+          </button>
+          <button className="btn btn-primary" onClick={openCreateModal}>+ Ingresar Empleado</button>
+        </div>
       </div>
 
       {isModalOpen && (
@@ -218,6 +225,14 @@ export default function Empleados() {
           </tbody>
         </table>
       </div>
+
+      {/* Import Modal */}
+      <ImportEmpleadosModal
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        onSuccess={fetchData}
+        clientes={clientes}
+      />
     </div>
   );
 }

@@ -303,72 +303,176 @@ def update_empleado(empleado_id: int, empleado: EmpleadoCreate, db: Session = De
 
 
 @router.post("/bulk")
-async def bulk_upload_empleados(file: UploadFile = File(...), db: Session = Depends(get_db)):
-    if not file.filename.endswith(".csv"):
-        # Extensible a Excel usando Pandas/openpyxl si se instala, por ahora CSV es estándar y eficiente
-        raise HTTPException(status_code=400, detail="Solo se permiten archivos CSV")
-        
-    content = await file.read()
-    try:
-        decoded = content.decode("utf-8")
-    except UnicodeDecodeError:
-        decoded = content.decode("latin1")
-        
-    reader = csv.DictReader(io.StringIO(decoded))
+async def bulk_upload_empleados(
+    file: UploadFile = File(...),
+    cliente_id: int = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Import employees from CSV or Excel (.xlsx/.xls).
     
+    Expected columns (case-insensitive, flexible names):
+      - nombre / nombre_completo (required)
+      - apellido (optional, concatenated with nombre)
+      - dni / documento (required)
+      - email / correo (optional)
+      - empresa_id / cliente_id (optional if cliente_id query param is provided)
+      - area / area_nombre (optional, matched by name)
+    
+    If `cliente_id` is provided as a query parameter, it applies to all rows
+    and overrides any empresa_id column in the file.
+    """
+    filename = file.filename.lower()
+    content = await file.read()
+    
+    # ── Parse rows from file ──
+    rows = []
+    if filename.endswith(".csv"):
+        try:
+            decoded = content.decode("utf-8")
+        except UnicodeDecodeError:
+            decoded = content.decode("latin1")
+        reader = csv.DictReader(io.StringIO(decoded))
+        for row in reader:
+            rows.append(row)
+    elif filename.endswith((".xlsx", ".xls")):
+        try:
+            import openpyxl
+            wb = openpyxl.load_workbook(io.BytesIO(content), read_only=True)
+            ws = wb.active
+            headers = []
+            for i, row in enumerate(ws.iter_rows(values_only=True)):
+                if i == 0:
+                    headers = [str(h).strip() if h else f"col_{j}" for j, h in enumerate(row)]
+                    continue
+                if all(c is None for c in row):
+                    continue
+                rows.append(dict(zip(headers, [str(v).strip() if v is not None else "" for v in row])))
+            wb.close()
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Error al leer el archivo Excel: {str(e)}")
+    else:
+        raise HTTPException(status_code=400, detail="Solo se permiten archivos .csv, .xlsx o .xls")
+    
+    if not rows:
+        raise HTTPException(status_code=400, detail="El archivo está vacío o no tiene datos válidos.")
+    
+    # ── Normalize column names ──
+    COLUMN_ALIASES = {
+        "nombre": ["nombre", "nombre_completo", "name", "nombres"],
+        "apellido": ["apellido", "apellidos", "last_name"],
+        "dni": ["dni", "documento", "doc", "document", "nro_documento", "numero_documento"],
+        "email": ["email", "correo", "mail", "e-mail", "correo_electronico"],
+        "empresa_id": ["empresa_id", "cliente_id", "empresa", "cliente", "company_id"],
+        "area": ["area", "area_nombre", "sector", "departamento"],
+    }
+    
+    def resolve_columns(row_keys):
+        """Map actual column names to canonical names."""
+        mapping = {}
+        normalized_keys = {k.lower().strip(): k for k in row_keys if k}
+        for canonical, aliases in COLUMN_ALIASES.items():
+            for alias in aliases:
+                if alias in normalized_keys:
+                    mapping[canonical] = normalized_keys[alias]
+                    break
+        return mapping
+    
+    col_map = resolve_columns(rows[0].keys()) if rows else {}
+    
+    # Validate required columns exist
+    if "nombre" not in col_map:
+        raise HTTPException(status_code=400, detail=f"No se encontró la columna 'Nombre' o 'Nombre_Completo'. Columnas detectadas: {list(rows[0].keys())}")
+    if "dni" not in col_map:
+        raise HTTPException(status_code=400, detail=f"No se encontró la columna 'DNI' o 'Documento'. Columnas detectadas: {list(rows[0].keys())}")
+    if not cliente_id and "empresa_id" not in col_map:
+        raise HTTPException(status_code=400, detail="Debe especificar el cliente_id como parámetro o incluir una columna 'empresa_id' / 'cliente_id' en el archivo.")
+    
+    # Pre-load areas for name matching
+    all_areas = db.query(Area).all()
+    area_name_map = {a.nombre.lower().strip(): a for a in all_areas}
+    
+    # ── Process rows ──
     created = 0
     skipped = 0
-    errors = 0
+    errors_list = []
     
-    for row in reader:
+    for i, row in enumerate(rows, start=2):  # start=2 because row 1 is headers
         try:
-            # Obtención segura ignorando mayúsculas/minúsculas de headers
-            keys = {k.lower().strip(): k for k in row.keys() if k}
+            nombre = row.get(col_map.get("nombre", ""), "").strip()
+            apellido = row.get(col_map.get("apellido", ""), "").strip()
+            dni = row.get(col_map.get("dni", ""), "").strip()
+            email = row.get(col_map.get("email", ""), "").strip()
+            area_name = row.get(col_map.get("area", ""), "").strip()
             
-            nombre = row.get(keys.get("nombre", "nombre"), "").strip()
-            apellido = row.get(keys.get("apellido", "apellido"), "").strip()
-            dni = str(row.get(keys.get("dni", "dni"), "")).strip()
-            email = row.get(keys.get("email", "email"), "").strip()
-            empresa_str = row.get(keys.get("empresa_id", "empresa_id"), "").strip()
+            # Determine empresa_id
+            row_empresa_id = cliente_id
+            if not row_empresa_id:
+                empresa_str = row.get(col_map.get("empresa_id", ""), "").strip()
+                if not empresa_str:
+                    errors_list.append({"fila": i, "motivo": "Sin empresa_id"})
+                    continue
+                try:
+                    row_empresa_id = int(float(empresa_str))
+                except (ValueError, TypeError):
+                    errors_list.append({"fila": i, "motivo": f"empresa_id inválido: '{empresa_str}'"})
+                    continue
             
-            if not dni or not empresa_str or not nombre:
-                errors += 1
+            # Clean DNI (remove dots, spaces)
+            dni = dni.replace(".", "").replace(" ", "").replace("-", "")
+            
+            if not nombre:
+                errors_list.append({"fila": i, "motivo": "Nombre vacío"})
                 continue
-                
-            empresa_id = int(empresa_str)
+            if not dni:
+                errors_list.append({"fila": i, "motivo": "DNI vacío"})
+                continue
             
+            nombre_completo = f"{nombre} {apellido}".strip()
+            
+            # Check for duplicates
             existente = db.query(Empleado).filter(
                 Empleado.dni == dni,
-                Empleado.cliente_id == empresa_id
+                Empleado.cliente_id == row_empresa_id
             ).first()
             
             if existente:
                 skipped += 1
                 continue
-                
+            
             nuevo_emp = Empleado(
-                nombre_completo=f"{nombre} {apellido}".strip(),
-                apellido=apellido,
+                nombre_completo=nombre_completo,
+                apellido=apellido if apellido else None,
                 dni=dni,
                 email=email if email else None,
-                cliente_id=empresa_id
+                cliente_id=row_empresa_id
             )
+            
+            # Area matching by name
+            if area_name:
+                area_obj = area_name_map.get(area_name.lower().strip())
+                if area_obj:
+                    nuevo_emp.areas.append(area_obj)
+            
             db.add(nuevo_emp)
             created += 1
             
-        except Exception:
-            errors += 1
-            
+        except Exception as e:
+            errors_list.append({"fila": i, "motivo": str(e)})
+    
     try:
         db.commit()
-    except Exception:
+    except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail="Error masivo en la base de datos al insertar registros.")
-        
+        raise HTTPException(status_code=500, detail=f"Error al guardar en la base de datos: {str(e)}")
+    
     return {
         "created": created,
         "skipped": skipped,
-        "errors": errors
+        "errors": len(errors_list),
+        "error_details": errors_list[:20],  # Return first 20 errors max
+        "total_rows": len(rows),
+        "columns_detected": list(col_map.keys())
     }
 
 def map_asignacion_to_ui(asig: AsignacionCapacitacion, db: Session):
