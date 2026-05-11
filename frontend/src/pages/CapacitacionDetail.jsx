@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { authFetch } from '../utils/apiClient';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 
 import Loading from '../components/Loading';
 import EmptyState from '../components/EmptyState';
@@ -28,7 +28,7 @@ export default function CapacitacionDetail() {
   const [matToDelete, setMatToDelete] = useState(null);
 
   // Capacitacion delete/archive modal
-  const navigate = require('react-router-dom').useNavigate();
+  const navigate = useNavigate();
   const [deleteModal, setDeleteModal] = useState({ show: false, mode: 'none' }); 
   const [isDeleting, setIsDeleting] = useState(false);
 
