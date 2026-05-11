@@ -1,5 +1,28 @@
-export const getAuthToken = () => {
-    // 1. Sesión admin (nuevo formato JWT)
+export const getAuthToken = (role = null) => {
+    // Si se especifica el rol, buscamos solo ese token para evitar mezclar sesiones
+    if (role === 'employee') {
+      const employeeSession = localStorage.getItem("employee_session");
+      if (employeeSession) {
+        try {
+          const parsed = JSON.parse(employeeSession);
+          return parsed.token || null;
+        } catch (e) {}
+      }
+      return null;
+    }
+
+    if (role === 'admin') {
+      const adminSession = localStorage.getItem("admin_session");
+      if (adminSession) {
+        try {
+          const parsed = JSON.parse(adminSession);
+          return parsed.token || null;
+        } catch (e) {}
+      }
+      return null;
+    }
+
+    // Default fallback legacy behavior
     const adminSession = localStorage.getItem("admin_session");
     if (adminSession) {
       try {
@@ -10,11 +33,9 @@ export const getAuthToken = () => {
       }
     }
 
-    // 2. Token legado (clave directa "token")
     const legacyToken = localStorage.getItem("token");
     if (legacyToken) return legacyToken;
   
-    // 3. Sesión empleado
     const employeeSession = localStorage.getItem("employee_session");
     if (employeeSession) {
       try {
@@ -30,7 +51,7 @@ export const getAuthToken = () => {
   };
   
 export const authFetch = async (url, options = {}) => {
-    const token = getAuthToken();
+    const token = getAuthToken(options.role);
     const isFormData = options.body instanceof FormData;
   
     const headers = { ...options.headers };

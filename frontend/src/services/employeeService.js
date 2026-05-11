@@ -12,7 +12,7 @@ const fetchWithAuth = async (url, options = {}) => {
   };
   
   try {
-    const res = await authFetch(url, { ...options, headers });
+    const res = await authFetch(url, { ...options, headers, role: 'employee' });
     if (!res.ok) {
       const errorBody = await res.text().catch(() => 'No response body');
       console.error(`API Error [${res.status}] at ${url}:`, errorBody);
@@ -67,7 +67,7 @@ export const employeeService = {
   downloadCertificado: async (hash) => {
     const url = `${API_URL}/certificados/${hash}/pdf`;
     try {
-      const response = await authFetch(url);
+      const response = await authFetch(url, { role: 'employee' });
 
       if (!response.ok) {
           throw new Error('No se pudo descargar el certificado');
