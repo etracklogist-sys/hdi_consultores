@@ -292,6 +292,24 @@ def get_plan_anual(cliente_id: int, anio: int, current_uid: str = Depends(get_cu
     current_month_val = now.month
     current_year_val = now.year
     
+    # ── LAZY AUTO-ACTIVATION: Activate PROGRAMADA items for current or past months ──
+    lazy_activated = False
+    for p in programadas:
+        if (p.estado == "PROGRAMADA" and p.anio == current_year_val and p.mes <= current_month_val):
+            p.estado = "ACTIVA"
+            p.fecha_activacion = now
+            trigger_asigacion_masiva(db, p)
+            logger.info(f"[LAZY-ACTIVATION] Auto-activated programada {p.id} ({p.mes}/{p.anio}) on GET request")
+            lazy_activated = True
+    
+    if lazy_activated:
+        db.commit()
+        # Reload programadas to reflect new state + assignments
+        programadas = db.query(CapacitacionProgramada).filter(
+            CapacitacionProgramada.cliente_id == cliente_id,
+            CapacitacionProgramada.anio == anio
+        ).all()
+    
     def _normalize_estado(p):
         """Normalize legacy CERRADA to a valid lifecycle state based on timing."""
         if p.estado != "CERRADA":
@@ -450,12 +468,36 @@ def upsert_plan_anual(cliente_id: int, payload: PlanAnualCreateUpdate, current_u
     plan.updated_at = datetime.now(timezone.utc)
     db.commit()
     
+    # ── AUTO-ACTIVATE: If any programada for the current month is still PROGRAMADA, activate it now ──
+    now = datetime.now(timezone.utc)
+    auto_activadas = 0
+    auto_asignaciones = 0
+    programadas_current_month = db.query(CapacitacionProgramada).filter(
+        CapacitacionProgramada.cliente_id == cliente_id,
+        CapacitacionProgramada.anio == now.year,
+        CapacitacionProgramada.mes == now.month,
+        CapacitacionProgramada.estado == "PROGRAMADA"
+    ).all()
+    
+    for p in programadas_current_month:
+        p.estado = "ACTIVA"
+        p.fecha_activacion = now
+        auto_asignaciones += trigger_asigacion_masiva(db, p)
+        auto_activadas += 1
+        logger.info(f"[AUTO-ACTIVATE-ON-SAVE] Activated programada {p.id} for current month")
+    
+    if auto_activadas > 0:
+        db.commit()
+        logger.info(f"[AUTO-ACTIVATE-ON-SAVE] {auto_activadas} programadas auto-activated, {auto_asignaciones} assignments created")
+    
     logger.info(f"[REGENERATION] Done. Created={creadas}, Updated={actualizadas}, Errors={len(errores)}")
     
     return {
         "plan_id": plan.id,
         "saved_at": plan.updated_at.isoformat() if plan.updated_at else None,
         "generacion": {"creadas": creadas, "actualizadas": actualizadas},
+        "auto_activadas": auto_activadas,
+        "auto_asignaciones": auto_asignaciones,
         "errores": errores
     }
 
