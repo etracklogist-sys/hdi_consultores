@@ -1,11 +1,12 @@
-import React, { useRef, useState, useEffect } from 'react';
+﻿import React, { useRef, useState, useEffect } from 'react';
 
 /**
  * Canvas-based signature pad component.
- * Captures freehand drawing and outputs base64 PNG.
+ * Supports both freehand drawing AND image upload.
  */
 export default function SignaturePad({ initialSignature, onSave, saving }) {
   const canvasRef = useRef(null);
+  const fileInputRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
 
@@ -14,17 +15,14 @@ export default function SignaturePad({ initialSignature, onSave, saving }) {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     
-    // Set canvas size
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
     
-    // Default style
     ctx.strokeStyle = '#1a1a2e';
     ctx.lineWidth = 2.5;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
-    // Draw initial signature if exists
     if (initialSignature) {
       const img = new Image();
       img.onload = () => {
@@ -91,6 +89,40 @@ export default function SignaturePad({ initialSignature, onSave, saving }) {
     onSave(dataUrl);
   };
 
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Solo se permiten archivos de imagen (JPG, PNG, etc.)');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Fit image proportionally inside canvas
+        const ratio = Math.min(canvas.width / img.width, canvas.height / img.height);
+        const w = img.width * ratio;
+        const h = img.height * ratio;
+        const x = (canvas.width - w) / 2;
+        const y = (canvas.height - h) / 2;
+
+        ctx.drawImage(img, x, y, w, h);
+        setHasSignature(true);
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+    // Reset input so same file can be re-selected
+    e.target.value = '';
+  };
+
   return (
     <div style={{
       background: 'white',
@@ -101,10 +133,10 @@ export default function SignaturePad({ initialSignature, onSave, saving }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <div>
           <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#1a1a2e' }}>
-            ✍️ Mi Firma Digital
+            Mi Firma Digital
           </h4>
           <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: '#64748b' }}>
-            Dibuje su firma en el recuadro. Se incluirá en sus certificados.
+            Dibuje su firma en el recuadro o suba una imagen.
           </p>
         </div>
       </div>
@@ -144,12 +176,40 @@ export default function SignaturePad({ initialSignature, onSave, saving }) {
             pointerEvents: 'none',
             fontStyle: 'italic',
           }}>
-            Firme aquí
+            Firme aqui o suba una imagen
           </div>
         )}
       </div>
 
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleImageUpload}
+        style={{ display: 'none' }}
+      />
+
       <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', justifyContent: 'flex-end' }}>
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={saving}
+          style={{
+            padding: '0.5rem 1.25rem',
+            borderRadius: '8px',
+            border: '1px solid #e2e8f0',
+            background: 'white',
+            color: '#334155',
+            fontWeight: 600,
+            fontSize: '0.85rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.3rem',
+          }}
+        >
+          📷 Subir imagen
+        </button>
         <button
           onClick={clearCanvas}
           disabled={saving}

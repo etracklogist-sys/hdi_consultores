@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { authFetch } from '../utils/apiClient';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import ImportEmpleadosModal from '../components/ImportEmpleadosModal';
@@ -112,15 +112,15 @@ export default function Empleados() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
           {filterClienteId && (
-            <Link to={`/admin/clientes/${filterClienteId}`} style={{color: 'var(--text-light)', textDecoration: 'none', marginBottom: '0.5rem', display: 'inline-block'}}>← Volver a {filterClienteName || 'Cliente'}</Link>
+            <Link to={`/admin/clientes/${filterClienteId}`} style={{color: 'var(--text-light)', textDecoration: 'none', marginBottom: '0.5rem', display: 'inline-block'}}>â† Volver a {filterClienteName || 'Cliente'}</Link>
           )}
           <h2 style={{ margin: 0 }}>
-            {filterClienteName ? `Empleados de ${filterClienteName}` : 'Gestión de Empleados'}
+            {filterClienteName ? `Empleados de ${filterClienteName}` : 'GestiÃ³n de Empleados'}
           </h2>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <button className="btn btn-outline" onClick={() => setIsImportOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            📥 Importar Excel
+            ðŸ“¥ Importar Excel
           </button>
           <button className="btn btn-primary" onClick={openCreateModal}>+ Ingresar Empleado</button>
         </div>
@@ -132,7 +132,7 @@ export default function Empleados() {
             <h3 style={{ marginTop: 0 }}>{isEditMode ? 'Editar Empleado' : 'Registrar Empleado a Capacitar'}</h3>
             <form onSubmit={handleSubmit}>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Nombre Completo</label>
-              <input type="text" required value={formData.nombre_completo} onChange={e => setFormData({ ...formData, nombre_completo: e.target.value })} placeholder="Ej: María Rodríguez" />
+              <input type="text" required value={formData.nombre_completo} onChange={e => setFormData({ ...formData, nombre_completo: e.target.value })} placeholder="Ej: MarÃ­a RodrÃ­guez" />
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
@@ -148,8 +148,8 @@ export default function Empleados() {
                 </div>
               </div>
 
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Correo de Contacto</label>
-              <input type="email" required value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="maria@empresa.com" />
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Correo de Contacto (opcional)</label>
+              <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="maria@empresa.com" />
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
@@ -160,7 +160,7 @@ export default function Empleados() {
                   </select>
                 </div>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Área</label>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Ãrea</label>
                   <select value={formData.area_id} onChange={e => setFormData({ ...formData, area_id: e.target.value })}>
                     <option value="">-- No registrada --</option>
                     {areas.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
@@ -185,8 +185,8 @@ export default function Empleados() {
               <th style={{ padding: '1rem' }}>DNI</th>
               <th style={{ padding: '1rem' }}>Empresa</th>
               <th style={{ padding: '1rem' }}>Email</th>
-              <th style={{ padding: '1rem' }}>Área</th>
-              <th style={{ padding: '1rem' }}>Estado Módulo</th>
+              <th style={{ padding: '1rem' }}>Ãrea</th>
+              <th style={{ padding: '1rem' }}>Estado MÃ³dulo</th>
               <th style={{ padding: '1rem' }}>Acciones</th>
             </tr>
           </thead>
