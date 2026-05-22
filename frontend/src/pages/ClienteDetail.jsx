@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { authFetch } from '../utils/apiClient';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 
@@ -145,20 +145,20 @@ export default function ClienteDetail() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', alignItems: 'center' }}>
         <div>
-          <Link to="/admin/clientes" style={{color: 'var(--text-light)', textDecoration: 'none', marginBottom: '0.5rem', display: 'inline-block'}}>â† Directorio de Clientes</Link>
+          <Link to="/admin/clientes" style={{color: 'var(--text-light)', textDecoration: 'none', marginBottom: '0.5rem', display: 'inline-block'}}>← Directorio de Clientes</Link>
           <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
             <h2 style={{margin: 0}}>{cliente.razon_social}</h2>
             <button className="btn btn-outline" style={{padding: '0.3rem 0.6rem', fontSize: '0.85rem'}} onClick={() => {
               setClientEditForm({ razon_social: cliente.razon_social, cuit: cliente.cuit, rubro_id: cliente.rubro_id, area_ids: cliente.areas?.map(a => a.id) || [], activo: cliente.activo });
               setIsClientEditModalOpen(true);
-            }}>âš™ï¸ Editar</button>
+            }}>⚙️ Editar</button>
             {cliente.can_delete && (
               <button 
                 className="btn" 
                 style={{padding: '0.3rem 0.6rem', fontSize: '0.85rem', background: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5'}}
                 onClick={() => setDeleteModal({ show: true, mode: 'delete' })}
               >
-                ðŸ—‘ï¸ Eliminar
+                🗑️ Eliminar
               </button>
             )}
             {!cliente.can_delete && cliente.can_archive && cliente.activo && (
@@ -167,48 +167,48 @@ export default function ClienteDetail() {
                 style={{padding: '0.3rem 0.6rem', fontSize: '0.85rem', background: '#fef3c7', color: '#92400e', border: '1px solid #fcd34d'}}
                 onClick={() => setDeleteModal({ show: true, mode: 'archive' })}
               >
-                ðŸ“¦ Archivar
+                📦 Archivar
               </button>
             )}
           </div>
           <p style={{color: 'var(--text-light)', margin: '0.5rem 0 0'}}>
-            CUIT: <strong>{cliente.cuit}</strong> Â· Rubro: <strong>{cliente.rubro_nombre || 'Sin asignar'}</strong>
+            CUIT: <strong>{cliente.cuit}</strong> · Rubro: <strong>{cliente.rubro_nombre || 'Sin asignar'}</strong>
           </p>
         </div>
         <div style={{display: 'flex', gap: '0.75rem', alignItems: 'center'}}>
           <span className={`badge ${cliente.activo ? 'badge-success' : 'badge-danger'}`} style={{fontSize: '0.95rem'}}>
             {cliente.activo ? 'Vigente' : 'Inactivo'}
           </span>
-          <button className="btn btn-primary" onClick={() => navigate(`/admin/plan-anual/${id}`)}>ðŸ—“ï¸ Plan Anual</button>
+          <button className="btn btn-primary" onClick={() => navigate(`/admin/plan-anual/${id}`)}>🗓️ Plan Anual</button>
         </div>
       </div>
 
-      {/* â•â•â• KPIs â•â•â• */}
+      {/* ═══ KPIs ═══ */}
       <div style={{display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem', marginBottom: '2rem'}}>
-        <KpiCard label="Cap. Activas" value={kpis.capacitaciones_activas || 0} color="var(--primary-color)" sub={`de ${yearSummary.total || 0} en el aÃ±o`} />
+        <KpiCard label="Cap. Activas" value={kpis.capacitaciones_activas || 0} color="var(--primary-color)" sub={`de ${yearSummary.total || 0} en el año`} />
         <KpiCard label="Empleados en Cap." value={kpis.empleados_con_capacitacion || 0} color="#0d9488" sub={`de ${kpis.empleados_activos || 0} activos`} />
         <KpiCard label="% Aprobados" value={`${kpis.pct_aprobados || 0}%`} color="#16a34a" sub={`${kpis.aprobados || 0} de ${kpis.total_asignaciones || 0}`} />
         <KpiCard label="% Desaprobados" value={`${kpis.pct_desaprobados || 0}%`} color="#dc2626" sub={`${kpis.desaprobados || 0} de ${kpis.total_asignaciones || 0}`} />
         <KpiCard label="Pendientes" value={kpis.pendientes || 0} color="#d97706" sub={kpis.en_curso ? `${kpis.en_curso} en curso` : ''} />
       </div>
 
-      {/* â•â•â• Year Summary Bar â•â•â• */}
+      {/* ═══ Year Summary Bar ═══ */}
       <div className="card" style={{marginBottom: '2rem', padding: '0.75rem 1.25rem'}}>
         <div style={{display: 'flex', alignItems: 'center', gap: '1.5rem', fontSize: '0.85rem'}}>
           <span style={{fontWeight: 600, color: 'var(--text-light)'}}>Resumen {dashboard?.anio || new Date().getFullYear()}:</span>
-          <span>ðŸŸ¢ {yearSummary.activas || 0} activas</span>
-          <span>ðŸŸ¡ {yearSummary.programadas || 0} pendientes</span>
-          <span>âœ“ {yearSummary.finalizadas || 0} finalizadas</span>
-          <span>âœ• {yearSummary.canceladas || 0} canceladas</span>
+          <span>🟢 {yearSummary.activas || 0} activas</span>
+          <span>🟡 {yearSummary.programadas || 0} pendientes</span>
+          <span>✓ {yearSummary.finalizadas || 0} finalizadas</span>
+          <span>✕ {yearSummary.canceladas || 0} canceladas</span>
         </div>
       </div>
 
-      {/* â•â•â• Capacitaciones del PerÃ­odo (operational) â•â•â• */}
+      {/* ═══ Capacitaciones del Período (operational) ═══ */}
       <div className="card" style={{padding: 0, overflow: 'hidden', marginBottom: '2rem'}}>
         <div style={{padding: '1rem 1.25rem', background: '#f8fafc', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
           <div>
-            <h3 style={{margin: 0, fontSize: '1rem'}}>âš¡ Instancias del perÃ­odo</h3>
-            <p style={{margin: '0.15rem 0 0', fontSize: '0.78rem', color: 'var(--text-light)'}}>Instancias activas y programadas â€” estado operativo real</p>
+            <h3 style={{margin: 0, fontSize: '1rem'}}>⚡ Instancias del período</h3>
+            <p style={{margin: '0.15rem 0 0', fontSize: '0.78rem', color: 'var(--text-light)'}}>Instancias activas y programadas — estado operativo real</p>
           </div>
         </div>
         {programadas.length > 0 ? (
@@ -217,7 +217,7 @@ export default function ClienteDetail() {
               <th style={{padding: '0.6rem 1rem', textAlign: 'left', fontSize: '0.8rem', color: 'var(--text-light)'}}>Nombre</th>
               <th style={{padding: '0.6rem 1rem', textAlign: 'left', fontSize: '0.8rem', color: 'var(--text-light)'}}>Tipo</th>
               <th style={{padding: '0.6rem 1rem', textAlign: 'left', fontSize: '0.8rem', color: 'var(--text-light)'}}>Mes</th>
-              <th style={{padding: '0.6rem 1rem', textAlign: 'left', fontSize: '0.8rem', color: 'var(--text-light)'}}>AÃ±o</th>
+              <th style={{padding: '0.6rem 1rem', textAlign: 'left', fontSize: '0.8rem', color: 'var(--text-light)'}}>Año</th>
               <th style={{padding: '0.6rem 1rem', textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-light)'}}>Estado</th>
               <th style={{padding: '0.6rem 1rem', textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-light)'}}>Asignados</th>
               <th style={{padding: '0.6rem 1rem', textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-light)'}}>En curso</th>
@@ -242,7 +242,7 @@ export default function ClienteDetail() {
                     ) : (
                       <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem'}}>
                         <span style={{padding: '0.15rem 0.5rem', borderRadius: '10px', fontSize: '0.75rem', fontWeight: 600, background: '#fef3c7', color: '#92400e'}}>Programada</span>
-                        <span style={{fontSize: '0.65rem', color: '#92400e', fontStyle: 'italic'}}>Pendiente de activaciÃ³n</span>
+                        <span style={{fontSize: '0.65rem', color: '#92400e', fontStyle: 'italic'}}>Pendiente de activación</span>
                       </div>
                     )}
                   </td>
@@ -263,23 +263,22 @@ export default function ClienteDetail() {
           </table>
         ) : (
           <div style={{padding: '2.5rem', textAlign: 'center', color: '#94a3b8'}}>
-            <div style={{fontSize: '1.5rem', marginBottom: '0.5rem'}}>ðŸ“‹</div>
+            <div style={{fontSize: '1.5rem', marginBottom: '0.5rem'}}>📋</div>
             <p style={{margin: 0}}>No hay capacitaciones activas ni programadas para este cliente.</p>
             <p style={{margin: '0.5rem 0 0', fontSize: '0.85rem'}}>
-              ConfigurÃ¡ el Plan Anual para generar instancias de ejecuciÃ³n.
+              Configurá el Plan Anual para generar instancias de ejecución.
             </p>
           </div>
         )}
       </div>
 
-      {/* â•â•â• Employee Status (real operational) â•â•â• */}
+      {/* ═══ Employee Status (real operational) ═══ */}
       <div className="card" style={{padding: 0, overflow: 'hidden', marginBottom: '2rem'}}>
         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', background: '#f8fafc', borderBottom: '1px solid var(--border-color)'}}>
           <div>
-            <h3 style={{margin: 0, fontSize: '1rem'}}>ðŸ‘¥ Estado de Empleados</h3>
+            <h3 style={{margin: 0, fontSize: '1rem'}}>👥 Estado de Empleados</h3>
             <p style={{margin: '0.15rem 0 0', fontSize: '0.78rem', color: 'var(--text-light)'}}>Progreso individual en capacitaciones activas</p>
           </div>
-
         </div>
         {empleados.length > 0 ? (
           <table style={{width: '100%', borderCollapse: 'collapse'}}>
@@ -293,7 +292,7 @@ export default function ClienteDetail() {
               {empleados.map((e, i) => (
                 <tr key={i} style={{borderBottom: '1px solid #f1f5f9'}}>
                   <td style={{padding: '0.6rem 1rem', fontWeight: 500, fontSize: '0.9rem'}}>{e.nombre}</td>
-                  <td style={{padding: '0.6rem 1rem', color: 'var(--text-light)', fontSize: '0.85rem'}}>{e.dni || 'â€”'}</td>
+                  <td style={{padding: '0.6rem 1rem', color: 'var(--text-light)', fontSize: '0.85rem'}}>{e.dni || '—'}</td>
                   <td style={{padding: '0.6rem 1rem', fontSize: '0.85rem'}}>{e.capacitacion}</td>
                   <td style={{padding: '0.6rem 1rem', textAlign: 'center'}}>{estadoBadge(e.estado)}</td>
                 </tr>
@@ -304,20 +303,20 @@ export default function ClienteDetail() {
           <div style={{padding: '2rem', textAlign: 'center', color: '#94a3b8'}}>
             {kpis.capacitaciones_activas > 0
               ? 'No hay asignaciones de empleados en capacitaciones activas.'
-              : 'Las asignaciones se generan automÃ¡ticamente al activarse las capacitaciones.'
+              : 'Las asignaciones se generan automáticamente al activarse las capacitaciones.'
             }
           </div>
         )}
       </div>
 
-      {/* â•â•â• Quick Info â•â•â• */}
+      {/* ═══ Quick Info ═══ */}
       <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem'}}>
         <div className="card">
-          <h4 style={{marginTop: 0, color: 'var(--text-light)', fontSize: '0.8rem', textTransform: 'uppercase'}}>Ãreas Asociadas</h4>
+          <h4 style={{marginTop: 0, color: 'var(--text-light)', fontSize: '0.8rem', textTransform: 'uppercase'}}>Áreas Asociadas</h4>
           <div style={{display: 'flex', gap: '0.35rem', flexWrap: 'wrap'}}>
             {cliente.areas && cliente.areas.length > 0 ? cliente.areas.map(a => (
               <span key={a.id} style={{padding: '0.2rem 0.5rem', borderRadius: '4px', background: 'var(--secondary-color)', color: '#fff', fontSize: '0.8rem'}}>{a.nombre}</span>
-            )) : <span style={{color: 'var(--text-light)'}}>Sin Ã¡reas</span>}
+            )) : <span style={{color: 'var(--text-light)'}}>Sin áreas</span>}
           </div>
         </div>
         <div className="card">
@@ -325,11 +324,11 @@ export default function ClienteDetail() {
           <p style={{fontSize: '1.1rem', fontWeight: 600, margin: '0 0 0.5rem'}}>
             <span style={{color: 'var(--accent-green)'}}>{cliente.empleados_activos}</span> activos / {cliente.total_empleados} totales
           </p>
-          <Link to={`/admin/empleados?cliente_id=${id}`} className="btn btn-outline" style={{textDecoration: 'none', fontSize: '0.85rem', padding: '0.3rem 0.6rem'}}>Ver todos â†’</Link>
+          <Link to={`/admin/empleados?cliente_id=${id}`} className="btn btn-outline" style={{textDecoration: 'none', fontSize: '0.85rem', padding: '0.3rem 0.6rem'}}>Ver todos →</Link>
         </div>
       </div>
 
-      {/* â•â•â• MODALS â•â•â• */}
+      {/* ═══ MODALS ═══ */}
 
       {/* Employee creation modal */}
       {isEmpModalOpen && (
@@ -359,7 +358,7 @@ export default function ClienteDetail() {
           <div className="modal-content" style={{maxWidth: '500px'}}>
             <h2>Editar Cliente</h2>
             <form onSubmit={handleClientUpdate}>
-              <label>RazÃ³n Social</label>
+              <label>Razón Social</label>
               <input type="text" value={clientEditForm.razon_social} onChange={e => setClientEditForm({...clientEditForm, razon_social: e.target.value})} required style={{width: '100%', marginBottom: '1rem', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px'}} />
               <label>CUIT</label>
               <input type="text" value={clientEditForm.cuit} onChange={e => setClientEditForm({...clientEditForm, cuit: e.target.value})} required style={{width: '100%', marginBottom: '1rem', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px'}} />
@@ -368,9 +367,9 @@ export default function ClienteDetail() {
                 <option value="">-- Sin Rubro --</option>
                 {rubros.map(r => <option key={r.id} value={r.id}>{r.nombre}</option>)}
               </select>
-              <label>Ãreas Asociadas</label>
+              <label>Áreas Asociadas</label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px', marginBottom: '1rem', minHeight: '48px', background: '#fafbfc' }}>
-                {areasList.length === 0 && <span style={{color: 'var(--text-light)', fontSize: '0.85rem'}}>No hay Ã¡reas disponibles</span>}
+                {areasList.length === 0 && <span style={{color: 'var(--text-light)', fontSize: '0.85rem'}}>No hay áreas disponibles</span>}
                 {areasList.map(a => {
                   const isSelected = clientEditForm.area_ids.includes(a.id);
                   return (
@@ -386,14 +385,14 @@ export default function ClienteDetail() {
                         color: isSelected ? '#fff' : 'var(--text-main)',
                         fontWeight: isSelected ? 600 : 400, fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.15s ease'
                       }}>
-                      <span style={{fontSize: '0.75rem'}}>{isSelected ? 'âœ“' : '+'}</span>{a.nombre}
+                      <span style={{fontSize: '0.75rem'}}>{isSelected ? '✓' : '+'}</span>{a.nombre}
                     </button>
                   );
                 })}
               </div>
               {clientEditForm.area_ids.length > 0 && (
                 <div style={{fontSize: '0.8rem', color: 'var(--text-light)', marginBottom: '0.75rem', marginTop: '-0.5rem'}}>
-                  {clientEditForm.area_ids.length} Ã¡rea{clientEditForm.area_ids.length !== 1 ? 's' : ''} seleccionada{clientEditForm.area_ids.length !== 1 ? 's' : ''}
+                  {clientEditForm.area_ids.length} área{clientEditForm.area_ids.length !== 1 ? 's' : ''} seleccionada{clientEditForm.area_ids.length !== 1 ? 's' : ''}
                 </div>
               )}
               <label style={{display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', cursor: 'pointer'}}>
@@ -418,8 +417,8 @@ export default function ClienteDetail() {
             </h3>
             <p>
               {deleteModal.mode === 'delete' 
-                ? `Â¿EstÃ¡s seguro de que deseas eliminar permanentemente a "${cliente.razon_social}"? Esta acciÃ³n no se puede deshacer, ya que el cliente no posee registros de ejecuciÃ³n.`
-                : `"${cliente.razon_social}" posee historial de ejecuciÃ³n. No puede ser eliminado permanentemente para preservar la integridad de los datos. En su lugar, serÃ¡ desactivado (archivado).`}
+                ? `¿Estás seguro de que deseas eliminar permanentemente a "${cliente.razon_social}"? Esta acción no se puede deshacer, ya que el cliente no posee registros de ejecución.`
+                : `"${cliente.razon_social}" posee historial de ejecución. No puede ser eliminado permanentemente para preservar la integridad de los datos. En su lugar, será desactivado (archivado).`}
             </p>
             <div style={{display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '1.5rem'}}>
               <button className="btn btn-outline" onClick={() => setDeleteModal({ show: false, mode: 'none' })} disabled={isDeleting}>Cancelar</button>
