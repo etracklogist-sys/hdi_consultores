@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+﻿from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 from app.db.database import get_db
@@ -35,7 +35,7 @@ class ClienteResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# ─── LIST / GET ───
+# â”€â”€â”€ LIST / GET â”€â”€â”€
 
 @router.get("/")
 def get_clientes(db: Session = Depends(get_db)):
@@ -114,7 +114,7 @@ def get_cliente_detail(cliente_id: int, db: Session = Depends(get_db)):
         "can_archive": not can_delete and cliente.activo
     }
 
-# ─── CREATE ───
+# â”€â”€â”€ CREATE â”€â”€â”€
 
 @router.post("/")
 def create_cliente(cliente: ClienteCreate, db: Session = Depends(get_db)):
@@ -149,7 +149,7 @@ def create_cliente(cliente: ClienteCreate, db: Session = Depends(get_db)):
         "activo": nuevo_cliente.activo
     }
 
-# ─── UPDATE ───
+# â”€â”€â”€ UPDATE â”€â”€â”€
 
 @router.put("/{cliente_id}")
 def update_cliente(cliente_id: int, update: ClienteUpdate, db: Session = Depends(get_db)):
@@ -184,7 +184,7 @@ def update_cliente(cliente_id: int, update: ClienteUpdate, db: Session = Depends
         "activo": cliente.activo
     }
 
-# ─── DELETION & ARCHIVING ───
+# â”€â”€â”€ DELETION & ARCHIVING â”€â”€â”€
 
 @router.delete("/{cliente_id}")
 def delete_cliente(cliente_id: int, db: Session = Depends(get_db)):
@@ -216,7 +216,7 @@ def archivar_cliente(cliente_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Cliente archivado correctamente"}
 
-# ─── CLIENT AREAS (convenience) ───
+# â”€â”€â”€ CLIENT AREAS (convenience) â”€â”€â”€
 
 @router.get("/{cliente_id}/areas")
 def get_cliente_areas(cliente_id: int, db: Session = Depends(get_db)):
@@ -225,7 +225,7 @@ def get_cliente_areas(cliente_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
     return [{"id": a.id, "nombre": a.nombre} for a in cliente.areas]
 
-# ─── CLIENT EMPLOYEES ───
+# â”€â”€â”€ CLIENT EMPLOYEES â”€â”€â”€
 
 @router.get("/{cliente_id}/empleados")
 def get_cliente_empleados(cliente_id: int, db: Session = Depends(get_db)):
@@ -242,7 +242,7 @@ def get_cliente_empleados(cliente_id: int, db: Session = Depends(get_db)):
         for e in empleados
     ]
 
-# ─── CLIENT ASIGNACIONES ───
+# â”€â”€â”€ CLIENT ASIGNACIONES â”€â”€â”€
 
 @router.get("/{cliente_id}/asignaciones")
 def get_cliente_asignaciones(cliente_id: int, db: Session = Depends(get_db)):
@@ -276,7 +276,7 @@ def get_cliente_asignaciones(cliente_id: int, db: Session = Depends(get_db)):
     
     return list(cap_map.values())
 
-# ─── PER-CAPACITACION ASSIGNMENT DETAIL ───
+# â”€â”€â”€ PER-CAPACITACION ASSIGNMENT DETAIL â”€â”€â”€
 
 @router.get("/{cliente_id}/programadas/{programada_id}/asignaciones")
 def get_cliente_programada_asignaciones(cliente_id: int, programada_id: int, db: Session = Depends(get_db)):
@@ -294,6 +294,14 @@ def get_cliente_programada_asignaciones(cliente_id: int, programada_id: int, db:
         raise HTTPException(status_code=404, detail="Programada no encontrada")
     
     cap = prog.capacitacion
+    
+    # AUTO-SYNC: If programada is ACTIVA, auto-assign any new eligible employees
+    if prog.estado == "ACTIVA":
+        from app.api.endpoints.plan_anual import trigger_asigacion_masiva
+        new_assignments = trigger_asigacion_masiva(db, prog)
+        if new_assignments > 0:
+            import logging
+            logging.getLogger(__name__).info(f"[AUTO-SYNC] {new_assignments} new assignments created for programada {prog.id} on detail view")
     
     asignaciones = db.query(AsignacionCapacitacion).filter(
         AsignacionCapacitacion.cliente_id == cliente_id,
@@ -319,7 +327,7 @@ def get_cliente_programada_asignaciones(cliente_id: int, programada_id: int, db:
             "empleado_id": emp.id,
             "nombre": emp.nombre_completo,
             "dni": emp.dni,
-            "area": emp.areas[0].nombre if emp.areas else "Sin área",
+            "area": emp.areas[0].nombre if emp.areas else "Sin Ã¡rea",
             "estado": a.estado,
             "nota": None,  # Can be extended with Intento scores later
             "origen": a.origen or "manual"
@@ -345,7 +353,7 @@ def get_cliente_programada_asignaciones(cliente_id: int, programada_id: int, db:
         "empleados": empleados_list
     }
 
-# ─── OPERATIONAL DASHBOARD ───
+# â”€â”€â”€ OPERATIONAL DASHBOARD â”€â”€â”€
 
 @router.get("/{cliente_id}/dashboard")
 def get_cliente_dashboard(
@@ -367,7 +375,7 @@ def get_cliente_dashboard(
     target_mes = mes or now.month
     target_anio = anio or now.year
     
-    # ── All programadas for this client and year ──
+    # â”€â”€ All programadas for this client and year â”€â”€
     all_programadas = db.query(CapacitacionProgramada).filter(
         CapacitacionProgramada.cliente_id == cliente_id,
         CapacitacionProgramada.anio == target_anio
@@ -377,19 +385,19 @@ def get_cliente_dashboard(
     def _effective_estado(p):
         if p.estado != "CERRADA":
             return p.estado
-        # Current or future month → treat as PROGRAMADA (pending activation)
+        # Current or future month â†’ treat as PROGRAMADA (pending activation)
         if (p.anio > target_anio) or (p.anio == target_anio and p.mes >= target_mes):
             return "PROGRAMADA"
         return "FINALIZADA"
     
-    # ── Current month programadas (the main operational view) ──
+    # â”€â”€ Current month programadas (the main operational view) â”€â”€
     month_programadas = [p for p in all_programadas if p.mes == target_mes]
     active_programadas = [p for p in all_programadas if _effective_estado(p) == "ACTIVA"]
     programada_programadas = [p for p in all_programadas if _effective_estado(p) == "PROGRAMADA"]
     # Operational = both ACTIVA and PROGRAMADA (PROGRAMADA must not disappear from the dashboard)
     operational_programadas = [p for p in all_programadas if _effective_estado(p) in ("ACTIVA", "PROGRAMADA")]
     
-    # ── Build per-programada operational metrics ──
+    # â”€â”€ Build per-programada operational metrics â”€â”€
     programadas_detail = []
     total_asignados_global = 0
     total_aprobados_global = 0
@@ -432,7 +440,7 @@ def get_cliente_dashboard(
             "can_cancel": p.estado in ("PROGRAMADA", "ACTIVA")
         })
     
-    # ── KPIs ──
+    # â”€â”€ KPIs â”€â”€
     empleados_activos = db.query(Empleado).filter(
         Empleado.cliente_id == cliente_id,
         Empleado.activo == True
@@ -446,7 +454,7 @@ def get_cliente_dashboard(
     pct_aprobados = round((total_aprobados_global / total_asignados_global * 100) if total_asignados_global > 0 else 0, 1)
     pct_desaprobados = round((total_desaprobados_global / total_asignados_global * 100) if total_asignados_global > 0 else 0, 1)
     
-    # ── Per-employee status for active programadas ──
+    # â”€â”€ Per-employee status for active programadas â”€â”€
     empleados_status = []
     if active_programadas:
         prog_ids = [p.id for p in active_programadas]
@@ -471,7 +479,7 @@ def get_cliente_dashboard(
                 "programada_id": a.programada_id
             })
     
-    # ── Year summary counts (normalized — CERRADA counts as FINALIZADA) ──
+    # â”€â”€ Year summary counts (normalized â€” CERRADA counts as FINALIZADA) â”€â”€
     year_summary = {
         "total": len(all_programadas),
         "activas": sum(1 for p in all_programadas if _effective_estado(p) == "ACTIVA"),

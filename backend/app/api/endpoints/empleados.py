@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+﻿from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from app.db.database import get_db
@@ -32,7 +32,7 @@ def get_current_empleado(current_uid: str = Depends(get_current_user_uid), db: S
         empleado = db.query(Empleado).filter(Empleado.uid_firebase == current_uid).first()
         
     if not empleado:
-        raise HTTPException(status_code=401, detail="Empleado no encontrado o sesión expirada")
+        raise HTTPException(status_code=401, detail="Empleado no encontrado o sesiÃ³n expirada")
         
     return empleado
 
@@ -63,7 +63,7 @@ class EmpleadoResponse(BaseModel):
 def get_areas_disponibles(db: Session = Depends(get_db)):
     areas = db.query(Area).all()
     if not areas:
-        default_areas = ["Choferes", "Administración", "Depósito", "Operaciones"]
+        default_areas = ["Choferes", "AdministraciÃ³n", "DepÃ³sito", "Operaciones"]
         for nombre in default_areas:
             db.add(Area(nombre=nombre))
         db.commit()
@@ -166,7 +166,7 @@ def get_empleado(empleado_id: int, db: Session = Depends(get_db)):
         "can_deactivate": not can_delete and empleado.activo
     }
 
-# ─── DELETION & ARCHIVING ───
+# â”€â”€â”€ DELETION & ARCHIVING â”€â”€â”€
 
 @router.delete("/{empleado_id}")
 def delete_empleado(empleado_id: int, db: Session = Depends(get_db)):
@@ -220,11 +220,11 @@ def create_empleado(empleado: EmpleadoCreate, db: Session = Depends(get_db)):
     if empleado.area_id:
         area = db.query(Area).filter(Area.id == empleado.area_id).first()
         if not area:
-            raise HTTPException(status_code=400, detail="El área especificada no existe.")
+            raise HTTPException(status_code=400, detail="El Ã¡rea especificada no existe.")
             
         # Verify area belongs to client (M2M) using the loaded relationship
         if not any(a.id == area.id for a in cliente.areas):
-            raise HTTPException(status_code=400, detail="El área no está habilitada para este cliente.")
+            raise HTTPException(status_code=400, detail="El Ã¡rea no estÃ¡ habilitada para este cliente.")
             
         db_empleado.areas.append(area)
 
@@ -279,11 +279,11 @@ def update_empleado(empleado_id: int, empleado: EmpleadoCreate, db: Session = De
     if empleado.area_id is not None:
         area = db.query(Area).filter(Area.id == empleado.area_id).first()
         if not area:
-            raise HTTPException(status_code=400, detail="El área especificada no existe.")
+            raise HTTPException(status_code=400, detail="El Ã¡rea especificada no existe.")
             
         # Verify area belongs to client (M2M) using the loaded relationship
         if not any(a.id == area.id for a in cliente.areas):
-            raise HTTPException(status_code=400, detail="El área no está habilitada para este cliente o no existe.")
+            raise HTTPException(status_code=400, detail="El Ã¡rea no estÃ¡ habilitada para este cliente o no existe.")
             
         db_empleado.areas = [area]
     else:
@@ -325,7 +325,7 @@ async def bulk_upload_empleados(
     filename = file.filename.lower()
     content = await file.read()
     
-    # ── Parse rows from file ──
+    # â”€â”€ Parse rows from file â”€â”€
     rows = []
     if filename.endswith(".csv"):
         try:
@@ -355,9 +355,9 @@ async def bulk_upload_empleados(
         raise HTTPException(status_code=400, detail="Solo se permiten archivos .csv, .xlsx o .xls")
     
     if not rows:
-        raise HTTPException(status_code=400, detail="El archivo está vacío o no tiene datos válidos.")
+        raise HTTPException(status_code=400, detail="El archivo estÃ¡ vacÃ­o o no tiene datos vÃ¡lidos.")
     
-    # ── Normalize column names ──
+    # â”€â”€ Normalize column names â”€â”€
     COLUMN_ALIASES = {
         "nombre": ["nombre", "nombre_completo", "name", "nombres"],
         "apellido": ["apellido", "apellidos", "last_name"],
@@ -382,17 +382,17 @@ async def bulk_upload_empleados(
     
     # Validate required columns exist
     if "nombre" not in col_map:
-        raise HTTPException(status_code=400, detail=f"No se encontró la columna 'Nombre' o 'Nombre_Completo'. Columnas detectadas: {list(rows[0].keys())}")
+        raise HTTPException(status_code=400, detail=f"No se encontrÃ³ la columna 'Nombre' o 'Nombre_Completo'. Columnas detectadas: {list(rows[0].keys())}")
     if "dni" not in col_map:
-        raise HTTPException(status_code=400, detail=f"No se encontró la columna 'DNI' o 'Documento'. Columnas detectadas: {list(rows[0].keys())}")
+        raise HTTPException(status_code=400, detail=f"No se encontrÃ³ la columna 'DNI' o 'Documento'. Columnas detectadas: {list(rows[0].keys())}")
     if not cliente_id and "empresa_id" not in col_map:
-        raise HTTPException(status_code=400, detail="Debe especificar el cliente_id como parámetro o incluir una columna 'empresa_id' / 'cliente_id' en el archivo.")
+        raise HTTPException(status_code=400, detail="Debe especificar el cliente_id como parÃ¡metro o incluir una columna 'empresa_id' / 'cliente_id' en el archivo.")
     
     # Pre-load areas for name matching
     all_areas = db.query(Area).all()
     area_name_map = {a.nombre.lower().strip(): a for a in all_areas}
     
-    # ── Process rows ──
+    # â”€â”€ Process rows â”€â”€
     created = 0
     skipped = 0
     errors_list = []
@@ -415,17 +415,17 @@ async def bulk_upload_empleados(
                 try:
                     row_empresa_id = int(float(empresa_str))
                 except (ValueError, TypeError):
-                    errors_list.append({"fila": i, "motivo": f"empresa_id inválido: '{empresa_str}'"})
+                    errors_list.append({"fila": i, "motivo": f"empresa_id invÃ¡lido: '{empresa_str}'"})
                     continue
             
             # Clean DNI (remove dots, spaces)
             dni = dni.replace(".", "").replace(" ", "").replace("-", "")
             
             if not nombre:
-                errors_list.append({"fila": i, "motivo": "Nombre vacío"})
+                errors_list.append({"fila": i, "motivo": "Nombre vacÃ­o"})
                 continue
             if not dni:
-                errors_list.append({"fila": i, "motivo": "DNI vacío"})
+                errors_list.append({"fila": i, "motivo": "DNI vacÃ­o"})
                 continue
             
             nombre_completo = f"{nombre} {apellido}".strip()
@@ -466,18 +466,43 @@ async def bulk_upload_empleados(
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error al guardar en la base de datos: {str(e)}")
     
+    # ── AUTO-ASSIGN: Re-trigger assignments for ACTIVA programadas of affected clients ──
+    auto_asignaciones = 0
+    if created > 0:
+        from app.api.endpoints.plan_anual import trigger_asigacion_masiva
+        affected_clients = set()
+        if cliente_id:
+            affected_clients.add(cliente_id)
+        else:
+            for row in rows:
+                empresa_str = row.get(col_map.get("empresa_id", ""), "").strip()
+                if empresa_str:
+                    try:
+                        affected_clients.add(int(float(empresa_str)))
+                    except:
+                        pass
+        
+        for cid in affected_clients:
+            activas = db.query(CapacitacionProgramada).filter(
+                CapacitacionProgramada.cliente_id == cid,
+                CapacitacionProgramada.estado == "ACTIVA"
+            ).all()
+            for prog in activas:
+                auto_asignaciones += trigger_asigacion_masiva(db, prog)
+    
     return {
         "created": created,
         "skipped": skipped,
         "errors": len(errors_list),
-        "error_details": errors_list[:20],  # Return first 20 errors max
+        "error_details": errors_list[:20],
         "total_rows": len(rows),
-        "columns_detected": list(col_map.keys())
+        "columns_detected": list(col_map.keys()),
+        "auto_asignaciones": auto_asignaciones
     }
 
 def map_asignacion_to_ui(asig: AsignacionCapacitacion, db: Session):
     """Derive the 6-state UI status from assignment tracking fields.
-    States: ASSIGNED → IN_PROGRESS → PENDING_EVALUATION → APPROVED → COMPLETED → CERTIFIED
+    States: ASSIGNED â†’ IN_PROGRESS â†’ PENDING_EVALUATION â†’ APPROVED â†’ COMPLETED â†’ CERTIFIED
     """
     now = datetime.now(timezone.utc)
     
@@ -496,7 +521,7 @@ def map_asignacion_to_ui(asig: AsignacionCapacitacion, db: Session):
     modalidad = prog.modalidad_final if prog else (asig.capacitacion.modalidad if asig.capacitacion else "presencial")
     requiere_evaluacion = prog.requiere_evaluacion_final if prog else (asig.capacitacion.requiere_evaluacion if asig.capacitacion else True)
 
-    # 1. Check for certificate → CERTIFIED
+    # 1. Check for certificate â†’ CERTIFIED
     cert = db.query(Certificado).filter(Certificado.asignacion_id == asig.id).first()
     if cert:
         certificado_id = cert.id
@@ -530,7 +555,7 @@ def map_asignacion_to_ui(asig: AsignacionCapacitacion, db: Session):
             "completed_at": asig.completed_at.isoformat() if asig.completed_at else None,
         }
 
-    # 2. Check if completed → COMPLETED (awaiting certificate or no cert needed)
+    # 2. Check if completed â†’ COMPLETED (awaiting certificate or no cert needed)
     if asig.completed_at:
         estado_ui = "COMPLETED"
         puede_comenzar = False
@@ -552,7 +577,7 @@ def map_asignacion_to_ui(asig: AsignacionCapacitacion, db: Session):
                 estado_ui = "APPROVED"
                 puede_comenzar = False
             else:
-                # Failed attempt — can retry
+                # Failed attempt â€” can retry
                 estado_ui = "PENDING_EVALUATION"
                 puede_comenzar = True
         elif asig.material_viewed_at:
@@ -564,10 +589,10 @@ def map_asignacion_to_ui(asig: AsignacionCapacitacion, db: Session):
     else:
         if asig.material_viewed_at:
             estado_ui = "IN_PROGRESS"
-            # Virtual trainings without evaluation → employee can mark completed
+            # Virtual trainings without evaluation â†’ employee can mark completed
             if modalidad == "virtual":
                 puede_marcar_completada = True
-        # Presential → admin marks attendance, employee just sees status
+        # Presential â†’ admin marks attendance, employee just sees status
         if modalidad == "presencial" and asig.asistio:
             estado_ui = "COMPLETED"
             puede_comenzar = False
@@ -650,7 +675,7 @@ def get_my_certificados(empleado: Empleado = Depends(get_current_empleado), db: 
         })
     return res
 
-# ─── New: Mark Material Viewed ───
+# â”€â”€â”€ New: Mark Material Viewed â”€â”€â”€
 
 @employee_router.post("/me/capacitaciones/{asignacion_id}/mark-material-viewed")
 def mark_material_viewed(asignacion_id: int, empleado: Empleado = Depends(get_current_empleado), db: Session = Depends(get_db)):
@@ -661,7 +686,7 @@ def mark_material_viewed(asignacion_id: int, empleado: Empleado = Depends(get_cu
     ).first()
     
     if not asig:
-        raise HTTPException(status_code=404, detail="Asignación no encontrada")
+        raise HTTPException(status_code=404, detail="AsignaciÃ³n no encontrada")
     
     # Idempotent: only set if not already set
     if not asig.material_viewed_at:
@@ -670,7 +695,7 @@ def mark_material_viewed(asignacion_id: int, empleado: Empleado = Depends(get_cu
     
     return {"message": "Material marcado como visto", "material_viewed_at": asig.material_viewed_at.isoformat()}
 
-# ─── New: Mark Completed (virtual, no-eval only) ───
+# â”€â”€â”€ New: Mark Completed (virtual, no-eval only) â”€â”€â”€
 
 @employee_router.post("/me/capacitaciones/{asignacion_id}/mark-completed")
 def mark_completed(asignacion_id: int, empleado: Empleado = Depends(get_current_empleado), db: Session = Depends(get_db)):
@@ -681,7 +706,7 @@ def mark_completed(asignacion_id: int, empleado: Empleado = Depends(get_current_
     ).first()
     
     if not asig:
-        raise HTTPException(status_code=404, detail="Asignación no encontrada")
+        raise HTTPException(status_code=404, detail="AsignaciÃ³n no encontrada")
     
     # Idempotent guard
     if asig.completed_at:
@@ -693,7 +718,7 @@ def mark_completed(asignacion_id: int, empleado: Empleado = Depends(get_current_
     modalidad = prog.modalidad_final if prog else (asig.capacitacion.modalidad if asig.capacitacion else "presencial")
     
     if requiere_eval:
-        raise HTTPException(status_code=400, detail="Esta capacitación requiere evaluación. No se puede marcar manualmente.")
+        raise HTTPException(status_code=400, detail="Esta capacitaciÃ³n requiere evaluaciÃ³n. No se puede marcar manualmente.")
     
     if modalidad == "presencial":
         raise HTTPException(status_code=400, detail="Capacitaciones presenciales requieren registro de asistencia del administrador.")
@@ -703,9 +728,9 @@ def mark_completed(asignacion_id: int, empleado: Empleado = Depends(get_current_
     asig.estado = "aprobado"
     db.commit()
     
-    return {"message": "Capacitación marcada como completada", "completed_at": asig.completed_at.isoformat()}
+    return {"message": "CapacitaciÃ³n marcada como completada", "completed_at": asig.completed_at.isoformat()}
 
-# ─── New: Employee Signature ───
+# â”€â”€â”€ New: Employee Signature â”€â”€â”€
 
 class FirmaRequest(BaseModel):
     firma_base64: str
