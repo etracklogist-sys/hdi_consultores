@@ -10,7 +10,7 @@ export default function DashboardLayout({ children, activeView, onSetView }) {
     { id: 'dashboard', label: 'Resumen', icon: '📊' },
     { id: 'trainings', label: 'Capacitaciones', icon: '🛡️' },
     { id: 'certificados', label: 'Mis Certificados', icon: '🏆' },
-    { id: 'profile', label: 'Mi Perfil', icon: '👤', disabled: true },
+    { id: 'profile', label: 'Mi Perfil', icon: '👤' },
   ];
 
   const handleLogout = () => {
@@ -61,7 +61,7 @@ export default function DashboardLayout({ children, activeView, onSetView }) {
               <div style={{ fontWeight: 600, fontSize: '0.85rem', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
                 {user?.empleado?.nombre_completo}
               </div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-light)' }}>Portal del Empleado</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-light)' }}>{user?.empleado?.empresa || 'Portal del Empleado'}</div>
             </div>
           </div>
           <button 

@@ -283,6 +283,69 @@ export default function EmpleadoPortal() {
 
   // --- RENDERS ---
 
+  const renderProfile = () => {
+    const user = authService.getCurrentUser()?.empleado || {};
+    
+    return (
+      <div style={{ animation: 'fadeIn 0.3s ease-out', maxWidth: '800px', margin: '0 auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
+          <div>
+            <h1>Mi Perfil</h1>
+            <p style={{ color: 'var(--text-light)', margin: 0 }}>Información personal y de la empresa.</p>
+          </div>
+        </div>
+
+        <div className="card-saas" style={{ marginBottom: '2rem' }}>
+          <h3 style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>Datos Personales</h3>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
+            <div>
+              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase' }}>Nombre Completo</label>
+              <div style={{ fontSize: '1.1rem', fontWeight: 500, marginTop: '0.25rem' }}>{user.nombre_completo || 'No especificado'}</div>
+            </div>
+            
+            <div>
+              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase' }}>DNI</label>
+              <div style={{ fontSize: '1.1rem', fontWeight: 500, marginTop: '0.25rem' }}>{user.dni || 'No especificado'}</div>
+            </div>
+            
+            <div>
+              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase' }}>Correo Electrónico</label>
+              <div style={{ fontSize: '1.1rem', fontWeight: 500, marginTop: '0.25rem' }}>{user.email || 'No especificado'}</div>
+            </div>
+            
+            <div>
+              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase' }}>Empresa</label>
+              <div style={{ fontSize: '1.1rem', fontWeight: 500, marginTop: '0.25rem', color: 'var(--primary-color)' }}>{user.empresa || 'No especificada'}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="card-saas">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
+            <div>
+              <h3 style={{ margin: 0 }}>Firma Digital</h3>
+              <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: 'var(--text-light)' }}>Gestiona tu firma para los certificados.</p>
+            </div>
+            <button className="btn btn-primary" onClick={() => setView('firma')}>
+              {firma ? 'Actualizar Firma' : 'Crear Firma'}
+            </button>
+          </div>
+          
+          {firma ? (
+            <div style={{ background: '#F8FAFC', padding: '1.5rem', borderRadius: '12px', display: 'flex', justifyContent: 'center' }}>
+              <img src={firma} alt="Mi Firma" style={{ maxHeight: '100px', objectFit: 'contain' }} />
+            </div>
+          ) : (
+            <div style={{ background: '#FFFBEB', color: '#92400E', padding: '1rem', borderRadius: '8px', textAlign: 'center', fontSize: '0.9rem' }}>
+              ⚠️ Aún no has registrado tu firma digital. Deberás hacerlo antes de poder obtener certificados.
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const renderDashboard = () => {
     const pendingCount = trainings.filter(t => ['ASSIGNED', 'IN_PROGRESS', 'PENDING_EVALUATION'].includes(t.estado_ui)).length;
     const certifiedCount = trainings.filter(t => t.estado_ui === 'CERTIFIED').length;
@@ -698,6 +761,7 @@ export default function EmpleadoPortal() {
       )}
       
       {view === 'dashboard' && renderDashboard()}
+      {view === 'profile' && renderProfile()}
       {view === 'trainings' && renderTrainings()}
       {view === 'certificados' && renderCertificados()}
       {view === 'materials' && renderMaterials()}

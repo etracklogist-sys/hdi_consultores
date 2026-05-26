@@ -61,13 +61,20 @@ def dni_access(req: DniAccessRequest, db: Session = Depends(get_db)):
         "empleado_id": empleado.id,
     })
 
+    # Get empresa name
+    from app.models.domain import Cliente
+    cliente = db.query(Cliente).filter(Cliente.id == empleado.cliente_id).first()
+
     return {
         "access_token": access_token,
         "token_type": "bearer",
         "empleado": {
             "id": empleado.id,
             "nombre_completo": empleado.nombre_completo,
-            "cliente_id": empleado.cliente_id
+            "dni": empleado.dni,
+            "email": empleado.email,
+            "cliente_id": empleado.cliente_id,
+            "empresa": cliente.razon_social if cliente else "Sin empresa"
         }
     }
 
