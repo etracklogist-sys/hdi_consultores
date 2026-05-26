@@ -102,13 +102,7 @@ export default function EmpleadoPortal() {
     setActionLoading(true);
     setActiveCourse(training);
     try {
-      // If training requires evaluation and material has been viewed, skip to eval
-      if (training.requiere_evaluacion && training.material_viewed) {
-        handleStartEvaluation(training);
-        return;
-      }
-      
-      // Fetch materials from mock service using capacitacion catalog id
+      // Always show materials first when starting a course
       const mats = await materialService.getMaterialesByCapacitacion(training.id); 
       setCourseMaterials(mats.filter(m => m.activo));
       
@@ -128,6 +122,15 @@ export default function EmpleadoPortal() {
     setActiveCourse(training);
     setActiveIntento(training.intento_id);
     try {
+      // If material hasn't been viewed yet, show materials first
+      if (!training.material_viewed) {
+        const mats = await materialService.getMaterialesByCapacitacion(training.id);
+        setCourseMaterials(mats.filter(m => m.activo));
+        employeeService.markMaterialViewed(training.id).catch(() => {});
+        setView('materials');
+        return;
+      }
+      // Material already viewed, go to evaluation
       const qData = await employeeService.getPreguntasEvaluacion(training.intento_id);
       setQuestions(qData);
       setCurrentQIndex(0);
