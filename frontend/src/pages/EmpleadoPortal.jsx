@@ -38,6 +38,7 @@ export default function EmpleadoPortal() {
   // Interaction States
   const [activeCourse, setActiveCourse] = useState(null);
   const [courseMaterials, setCourseMaterials] = useState([]);
+  const [materialOpened, setMaterialOpened] = useState(false);
   const [activeIntento, setActiveIntento] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [currentQIndex, setCurrentQIndex] = useState(0);
@@ -105,9 +106,7 @@ export default function EmpleadoPortal() {
       // Always show materials first when starting a course
       const mats = await materialService.getMaterialesByCapacitacion(training.id); 
       setCourseMaterials(mats.filter(m => m.activo));
-      
-      // Mark material as viewed on the backend (does NOT complete the training)
-      employeeService.markMaterialViewed(training.id).catch(() => {});
+      setMaterialOpened(false);
       
       setView('materials');
     } catch (err) {
@@ -126,7 +125,7 @@ export default function EmpleadoPortal() {
       if (!training.material_viewed) {
         const mats = await materialService.getMaterialesByCapacitacion(training.id);
         setCourseMaterials(mats.filter(m => m.activo));
-        employeeService.markMaterialViewed(training.id).catch(() => {});
+        setMaterialOpened(false);
         setView('materials');
         return;
       }
@@ -145,6 +144,14 @@ export default function EmpleadoPortal() {
       handleError(err);
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleOpenResource = (url) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+    if (!materialOpened && activeCourse) {
+      setMaterialOpened(true);
+      employeeService.markMaterialViewed(activeCourse.id).catch(() => {});
     }
   };
 
@@ -431,7 +438,7 @@ export default function EmpleadoPortal() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
-          {activeCourse?.requiere_evaluacion && (
+          {activeCourse?.requiere_evaluacion && (materialOpened || activeCourse?.material_viewed) && (
             <button className="btn btn-primary" style={{ padding: '0.75rem 1.5rem', fontSize: '0.9rem' }} onClick={() => handleStartEvaluation()}>
               Comenzar Evaluación →
             </button>
@@ -446,8 +453,8 @@ export default function EmpleadoPortal() {
 
       {/* Material viewed indicator */}
       <div style={{
-        background: '#f0fdf4',
-        border: '1px solid #bbf7d0',
+        background: (materialOpened || activeCourse?.material_viewed) ? '#f0fdf4' : '#fffbeb',
+        border: (materialOpened || activeCourse?.material_viewed) ? '1px solid #bbf7d0' : '1px solid #fde68a',
         borderRadius: '12px',
         padding: '0.75rem 1.25rem',
         marginBottom: '1.5rem',
@@ -455,9 +462,9 @@ export default function EmpleadoPortal() {
         alignItems: 'center',
         gap: '0.5rem',
         fontSize: '0.85rem',
-        color: '#166534',
+        color: (materialOpened || activeCourse?.material_viewed) ? '#166534' : '#92400e',
       }}>
-        ✅ Material registrado como visto
+        {(materialOpened || activeCourse?.material_viewed) ? '✅ Material registrado como visto' : '⚠️ Debes abrir el material antes de continuar'}
         <span style={{ fontSize: '0.75rem', color: '#64748b', marginLeft: 'auto' }}>
           {activeCourse?.requiere_evaluacion 
             ? 'Ahora puedes realizar la evaluación' 
@@ -478,9 +485,9 @@ export default function EmpleadoPortal() {
                 <div style={{ fontSize: '1.5rem', marginBottom: '0.75rem' }}>{mat.tipo === 'pdf' ? '📄' : '▶️'}</div>
                 <h4 style={{ margin: '0 0 0.5rem' }}>{mat.titulo}</h4>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', minHeight: '3em' }}>{mat.descripcion}</p>
-                <a href={mat.url} target="_blank" rel="noopener noreferrer" className="btn" style={{ width: '100%', marginTop: '1rem', background: '#F8FAFC' }}>
+                <button className="btn" style={{ width: '100%', marginTop: '1rem', background: '#F8FAFC', cursor: 'pointer' }} onClick={() => handleOpenResource(mat.url)}>
                   Abrir Recurso
-                </a>
+                </button>
               </div>
             ))}
           </div>
