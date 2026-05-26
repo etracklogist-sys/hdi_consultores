@@ -121,16 +121,30 @@ export default function EmpleadoPortal() {
     setActiveCourse(training);
     setActiveIntento(training.intento_id);
     try {
-      // If material hasn't been viewed yet, show materials first
-      if (!training.material_viewed) {
-        const mats = await materialService.getMaterialesByCapacitacion(training.capacitacion_id || training.id);
-        setCourseMaterials(mats.filter(m => m.activo));
-        setMaterialOpened(false);
-        setView('materials');
-        return;
-      }
-      // Material already viewed, go to evaluation
-      const qData = await employeeService.getPreguntasEvaluacion(training.intento_id);
+      // Always show materials first so employee can review before continuing evaluation
+      const mats = await materialService.getMaterialesByCapacitacion(training.capacitacion_id || training.id);
+      setCourseMaterials(mats.filter(m => m.activo));
+      setMaterialOpened(training.material_viewed || false);
+      setView('materials');
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleOpenResource = (url) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+    if (!materialOpened && activeCourse) {
+      setMaterialOpened(true);
+      employeeService.markMaterialViewed(activeCourse.id).catch(() => {});
+    }
+  };
+
+  const handleResumeEvaluation = async () => {
+    setActionLoading(true);
+    try {
+      const qData = await employeeService.getPreguntasEvaluacion(activeIntento);
       setQuestions(qData);
       setCurrentQIndex(0);
       setSelectedOption(null);
@@ -144,14 +158,6 @@ export default function EmpleadoPortal() {
       handleError(err);
     } finally {
       setActionLoading(false);
-    }
-  };
-
-  const handleOpenResource = (url) => {
-    window.open(url, '_blank', 'noopener,noreferrer');
-    if (!materialOpened && activeCourse) {
-      setMaterialOpened(true);
-      employeeService.markMaterialViewed(activeCourse.id).catch(() => {});
     }
   };
 
@@ -439,7 +445,7 @@ export default function EmpleadoPortal() {
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           {activeCourse?.requiere_evaluacion && (materialOpened || activeCourse?.material_viewed) && (
-            <button className="btn btn-primary" style={{ padding: '0.75rem 1.5rem', fontSize: '0.9rem' }} onClick={() => handleStartEvaluation()}>
+            <button className="btn btn-primary" style={{ padding: '0.75rem 1.5rem', fontSize: '0.9rem' }} onClick={() => activeIntento ? handleResumeEvaluation() : handleStartEvaluation()}>
               Comenzar Evaluación →
             </button>
           )}
