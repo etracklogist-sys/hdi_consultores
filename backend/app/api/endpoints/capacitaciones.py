@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.database import get_db
-from app.models.domain import Capacitacion, Pregunta, Cliente
+from app.models.domain import Capacitacion, Pregunta, Material, Cliente
 from pydantic import BaseModel
 from typing import List, Optional
 import json
@@ -357,3 +357,107 @@ def delete_pregunta(pregunta_id: int, db: Session = Depends(get_db)):
     db.commit()
     
     return {"message": "Pregunta eliminada"}
+
+# ----------------- MATERIALES CRUD -----------------
+
+class MaterialCreate(BaseModel):
+    titulo: str
+    descripcion: str | None = None
+    tipo: str = "link"
+    url: str
+    orden: int = 1
+    activo: bool = True
+
+class MaterialResponse(BaseModel):
+    id: int
+    titulo: str
+    descripcion: str | None
+    tipo: str
+    url: str
+    orden: int
+    activo: bool
+    capacitacion_id: int
+
+@router.get("/{capacitacion_id}/materiales", response_model=List[MaterialResponse])
+def get_materiales(capacitacion_id: int, db: Session = Depends(get_db)):
+    materiales = db.query(Material).filter(
+        Material.capacitacion_id == capacitacion_id
+    ).order_by(Material.orden).all()
+    return [{
+        "id": m.id,
+        "titulo": m.titulo,
+        "descripcion": m.descripcion,
+        "tipo": m.tipo or "link",
+        "url": m.url,
+        "orden": m.orden or 1,
+        "activo": m.activo if m.activo is not None else True,
+        "capacitacion_id": m.capacitacion_id
+    } for m in materiales]
+
+@router.post("/{capacitacion_id}/materiales", response_model=MaterialResponse)
+def create_material(capacitacion_id: int, req: MaterialCreate, db: Session = Depends(get_db)):
+    cap = db.query(Capacitacion).filter(Capacitacion.id == capacitacion_id).first()
+    if not cap:
+        raise HTTPException(status_code=404, detail="Capacitacion no encontrada")
+    
+    nuevo = Material(
+        titulo=req.titulo,
+        descripcion=req.descripcion,
+        tipo=req.tipo,
+        url=req.url,
+        orden=req.orden,
+        activo=req.activo,
+        capacitacion_id=capacitacion_id
+    )
+    db.add(nuevo)
+    db.commit()
+    db.refresh(nuevo)
+    
+    return {
+        "id": nuevo.id,
+        "titulo": nuevo.titulo,
+        "descripcion": nuevo.descripcion,
+        "tipo": nuevo.tipo or "link",
+        "url": nuevo.url,
+        "orden": nuevo.orden or 1,
+        "activo": nuevo.activo if nuevo.activo is not None else True,
+        "capacitacion_id": nuevo.capacitacion_id
+    }
+
+@router.put("/materiales/{material_id}", response_model=MaterialResponse)
+def update_material(material_id: int, req: MaterialCreate, db: Session = Depends(get_db)):
+    mat = db.query(Material).filter(Material.id == material_id).first()
+    if not mat:
+        raise HTTPException(status_code=404, detail="Material no encontrado")
+    
+    mat.titulo = req.titulo
+    mat.descripcion = req.descripcion
+    mat.tipo = req.tipo
+    mat.url = req.url
+    mat.orden = req.orden
+    mat.activo = req.activo
+    
+    db.commit()
+    db.refresh(mat)
+    
+    return {
+        "id": mat.id,
+        "titulo": mat.titulo,
+        "descripcion": mat.descripcion,
+        "tipo": mat.tipo or "link",
+        "url": mat.url,
+        "orden": mat.orden or 1,
+        "activo": mat.activo if mat.activo is not None else True,
+        "capacitacion_id": mat.capacitacion_id
+    }
+
+@router.delete("/materiales/{material_id}")
+def delete_material(material_id: int, db: Session = Depends(get_db)):
+    mat = db.query(Material).filter(Material.id == material_id).first()
+    if not mat:
+        raise HTTPException(status_code=404, detail="Material no encontrado")
+    
+    db.delete(mat)
+    db.commit()
+    
+    return {"message": "Material eliminado"}

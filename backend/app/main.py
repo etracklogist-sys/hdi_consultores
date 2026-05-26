@@ -64,6 +64,43 @@ app.include_router(admin_profile.router,  prefix=settings.API_V1_STR + "/admin/p
 # Certificados: /verificar/{codigo} es público, /admin/list requiere admin
 app.include_router(certificados.router,   prefix=settings.API_V1_STR + "/certificados",   tags=["certificados"])
 
+
+# --- Startup DB Migration ---
+@app.on_event("startup")
+def startup_migrate_materials():
+    """Add missing columns to materiales_capacitacion table."""
+    from sqlalchemy import text, inspect
+    db = SessionLocal()
+    try:
+        inspector = inspect(db.bind)
+        if 'materiales_capacitacion' in inspector.get_table_names():
+            existing_cols = {c['name'] for c in inspector.get_columns('materiales_capacitacion')}
+            migrations = []
+            if 'descripcion' not in existing_cols:
+                migrations.append("ALTER TABLE materiales_capacitacion ADD COLUMN descripcion VARCHAR(500) NULL")
+            if 'tipo' not in existing_cols:
+                migrations.append("ALTER TABLE materiales_capacitacion ADD COLUMN tipo VARCHAR(50) DEFAULT 'link'")
+            if 'orden' not in existing_cols:
+                migrations.append("ALTER TABLE materiales_capacitacion ADD COLUMN orden INT DEFAULT 1")
+            if 'activo' not in existing_cols:
+                migrations.append("ALTER TABLE materiales_capacitacion ADD COLUMN activo BOOLEAN DEFAULT TRUE")
+            for sql in migrations:
+                db.execute(text(sql))
+                logger.info(f"[MIGRATION] Executed: {sql}")
+            if migrations:
+                db.commit()
+                logger.info(f"[MIGRATION] {len(migrations)} columns added to materiales_capacitacion")
+        else:
+            # Table doesn't exist yet, create_all will handle it
+            from app.db.database import Base
+            Base.metadata.create_all(bind=db.bind)
+            logger.info("[MIGRATION] Created materiales_capacitacion table")
+    except Exception as e:
+        logger.error(f"[MIGRATION] Non-fatal migration error: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
 # --- Startup Auto-Activation ---
 @app.on_event("startup")
 def startup_auto_activation():

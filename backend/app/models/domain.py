@@ -202,7 +202,11 @@ class Material(Base):
     __tablename__ = "materiales_capacitacion"
     id = Column(Integer, primary_key=True, index=True)
     titulo = Column(String(255), nullable=False)
+    descripcion = Column(String(500), nullable=True)
+    tipo = Column(String(50), default="link")  # pdf, video, imagen, link
     url = Column(String(500), nullable=False)
+    orden = Column(Integer, default=1)
+    activo = Column(Boolean, default=True)
     capacitacion_id = Column(Integer, ForeignKey("catalogo_capacitaciones.id"))
     
     capacitacion = relationship("Capacitacion", back_populates="materiales")
