@@ -104,7 +104,7 @@ export default function EmpleadoPortal() {
     setActiveCourse(training);
     try {
       // Always show materials first when starting a course
-      const mats = await materialService.getMaterialesByCapacitacion(training.id); 
+      const mats = await materialService.getMaterialesByCapacitacion(training.capacitacion_id || training.id); 
       setCourseMaterials(mats.filter(m => m.activo));
       setMaterialOpened(false);
       
@@ -123,7 +123,7 @@ export default function EmpleadoPortal() {
     try {
       // If material hasn't been viewed yet, show materials first
       if (!training.material_viewed) {
-        const mats = await materialService.getMaterialesByCapacitacion(training.id);
+        const mats = await materialService.getMaterialesByCapacitacion(training.capacitacion_id || training.id);
         setCourseMaterials(mats.filter(m => m.activo));
         setMaterialOpened(false);
         setView('materials');

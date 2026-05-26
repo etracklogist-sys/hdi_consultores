@@ -236,8 +236,8 @@ def descargar_pdf_certificado(codigo: str, db: Session = Depends(get_db)):
     SIG_BLOCK_Y = 100   # Bottom of signature blocks
     SIG_GAP = 30        # Gap between the two blocks
     
-    # Position blocks: start from center of page going right
-    emp_block_x = width / 2.0 - 20
+    # Position blocks: align to the right margin with a 32pt padding
+    emp_block_x = width - (SIG_BLOCK_W * 2) - SIG_GAP - 32
     trainer_block_x = emp_block_x + SIG_BLOCK_W + SIG_GAP
     
     # Draw employee signature block

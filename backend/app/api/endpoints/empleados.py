@@ -126,6 +126,7 @@ def get_empleado(empleado_id: int, db: Session = Depends(get_db)):
 
         asig_data = {
             "id": asig.id,
+        "capacitacion_id": asig.capacitacion_id,
             "curso_id": asig.capacitacion_id, 
             "capacitacion": cap_str,
             "fecha": asig.fecha_asignacion.strftime('%d/%m/%Y') if asig.fecha_asignacion else "N/A",
@@ -538,6 +539,7 @@ def map_asignacion_to_ui(asig: AsignacionCapacitacion, db: Session):
                 puede_comenzar = False
         return {
             "id": asig.id,
+        "capacitacion_id": asig.capacitacion_id,
             "nombre": asig.capacitacion.nombre if asig.capacitacion else "N/A",
             "estado_ui": estado_ui,
             "requiere_evaluacion": requiere_evaluacion,
@@ -599,6 +601,7 @@ def map_asignacion_to_ui(asig: AsignacionCapacitacion, db: Session):
 
     return {
         "id": asig.id,
+        "capacitacion_id": asig.capacitacion_id,
         "nombre": asig.capacitacion.nombre if asig.capacitacion else "N/A",
         "estado_ui": estado_ui,
         "requiere_evaluacion": requiere_evaluacion,
