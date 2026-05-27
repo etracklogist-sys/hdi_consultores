@@ -5,12 +5,12 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 export const materialService = {
   getMaterialesByCapacitacion: async (capacitacionId) => {
     const user = authService.getCurrentUser();
-    const isEmployee = user?.role === 'empleado_portal';
+    const isEmployee = !!user?.empleado;
     const url = isEmployee 
       ? `${API_URL}/empleados/me/capacitaciones/${capacitacionId}/materiales`
       : `${API_URL}/capacitaciones/${capacitacionId}/materiales`;
     
-    const res = await authFetch(url);
+    const res = await authFetch(url, isEmployee ? { role: 'employee' } : { role: 'admin' });
     if (!res.ok) {
       console.warn('Materials endpoint not available, returning empty');
       return [];
