@@ -32,7 +32,7 @@ export default function DashboardLayout({ children, activeView, onSetView }) {
       )}
 
       {/* Sidebar */}
-      <aside className={sidebar-saas }>
+      <aside className={`sidebar-saas ${mobileMenuOpen ? "open" : ""}`}>
         <div className="sidebar-logo">
           HDI<span style={{color: 'var(--primary-color)', fontWeight: 800}}> Consultores</span>
         </div>
