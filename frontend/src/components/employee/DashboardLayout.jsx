@@ -5,6 +5,7 @@ import { authService } from '../../services/authService';
 export default function DashboardLayout({ children, activeView, onSetView }) {
   const navigate = useNavigate();
   const user = authService.getCurrentUser();
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   const menuItems = [
     { id: 'dashboard', label: 'Resumen', icon: '📊' },
@@ -20,8 +21,18 @@ export default function DashboardLayout({ children, activeView, onSetView }) {
 
   return (
     <div className="dashboard-container">
+      {/* Mobile hamburger */}
+      <button className="mobile-menu-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+        {mobileMenuOpen ? '✕' : '☰'}
+      </button>
+
+      {/* Mobile overlay */}
+      {mobileMenuOpen && (
+        <div className="mobile-overlay active" onClick={() => setMobileMenuOpen(false)} />
+      )}
+
       {/* Sidebar */}
-      <aside className="sidebar-saas">
+      <aside className={sidebar-saas }>
         <div className="sidebar-logo">
           HDI<span style={{color: 'var(--primary-color)', fontWeight: 800}}> Consultores</span>
         </div>
@@ -31,7 +42,7 @@ export default function DashboardLayout({ children, activeView, onSetView }) {
             <button
               key={item.id}
               className={`nav-item-saas ${activeView === item.id ? 'active' : ''} ${item.disabled ? 'disabled-nav' : ''}`}
-              onClick={() => !item.disabled && onSetView(item.id)}
+              onClick={() => { if (!item.disabled) { onSetView(item.id); setMobileMenuOpen(false); } }}
               style={{ 
                 width: '100%', 
                 border: 'none', 

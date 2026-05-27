@@ -763,3 +763,200 @@ label {
 .alert-banner-saas .action:hover {
   text-decoration: underline;
 }
+
+/* =====================================================
+   MOBILE RESPONSIVE
+   ===================================================== */
+
+/* Hamburger button (hidden on desktop) */
+.mobile-menu-btn {
+  display: none;
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 1001;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+/* Mobile overlay */
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 999;
+}
+
+@media (max-width: 768px) {
+  /* Show hamburger */
+  .mobile-menu-btn {
+    display: flex;
+  }
+
+  .mobile-overlay.active {
+    display: block;
+  }
+
+  /* Dashboard layout: single column */
+  .dashboard-container {
+    grid-template-columns: 1fr;
+  }
+
+  /* Sidebar: off-canvas drawer */
+  .sidebar-saas {
+    position: fixed;
+    left: -280px;
+    top: 0;
+    width: 260px;
+    height: 100vh;
+    z-index: 1000;
+    transition: left 0.3s ease;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+  }
+
+  .sidebar-saas.open {
+    left: 0;
+  }
+
+  /* Main content: full width, add top padding for hamburger */
+  .main-content-saas {
+    padding: 3.5rem 1rem 1.5rem;
+    max-width: 100%;
+  }
+
+  /* KPI cards grid: 2 columns on mobile */
+  .kpi-grid-row {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  /* Cards */
+  .card-saas {
+    padding: 1rem;
+  }
+
+  /* Actions grid */
+  .actions-grid-row {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  /* Header row with buttons */
+  .header-row-responsive {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+  }
+
+  /* Alert banner */
+  .alert-banner-saas {
+    flex-direction: column;
+    gap: 0.75rem;
+    text-align: center;
+    padding: 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  /* Circular progress smaller */
+  .circular-progress-saas {
+    width: 100px;
+    height: 100px;
+  }
+
+  /* Tables scroll horizontally */
+  .table-responsive-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Profile grid */
+  .profile-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Material cards */
+  .material-card {
+    flex-direction: column !important;
+  }
+
+  /* Evaluation */
+  .eval-container {
+    padding: 1rem !important;
+  }
+
+  /* Signature pad */
+  .signature-pad-container canvas {
+    max-width: 100% !important;
+  }
+
+  /* Hide desktop-only elements */
+  .hide-mobile {
+    display: none !important;
+  }
+
+  /* Fix buttons on mobile */
+  .btn {
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+  }
+
+  /* Fix h1 size */
+  h1 {
+    font-size: 1.5rem !important;
+  }
+
+  h2 {
+    font-size: 1.25rem !important;
+  }
+
+  /* Fix flex wrapping */
+  .flex-wrap-mobile {
+    flex-wrap: wrap !important;
+  }
+}
+
+/* Small phones */
+@media (max-width: 400px) {
+  .kpi-grid-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  .main-content-saas {
+    padding: 3.5rem 0.75rem 1rem;
+  }
+}
+
+/* Admin portal responsive */
+@media (max-width: 768px) {
+  .admin-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: fixed;
+    left: -280px;
+    top: 0;
+    width: 260px;
+    height: 100vh;
+    z-index: 1000;
+    transition: left 0.3s ease;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+  }
+
+  .sidebar.open {
+    left: 0;
+  }
+
+  .main-content {
+    padding: 3.5rem 1rem 1.5rem;
+  }
+}

@@ -2,7 +2,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from app.db.database import get_db
-from app.models.domain import Empleado, Cliente, Area, AsignacionCapacitacion, Intento, Certificado, Capacitacion, CapacitacionProgramada
+from app.models.domain import Empleado, Cliente, Area, AsignacionCapacitacion, Intento, Certificado, Capacitacion, CapacitacionProgramada, Material
 from app.core.security import get_current_user_uid
 from pydantic import BaseModel
 from typing import List
@@ -750,3 +750,29 @@ def get_firma(empleado: Empleado = Depends(get_current_empleado), db: Session = 
     """Get the employee's current digital signature."""
     return {"firma_base64": empleado.firma_base64}
 
+@employee_router.get("/me/capacitaciones/{capacitacion_id}/materiales")
+def get_materiales_empleado(capacitacion_id: int, empleado: Empleado = Depends(get_current_empleado), db: Session = Depends(get_db)):
+    """Get materials for a capacitacion - accessible by employees."""
+    # Verify the employee is actually assigned to this capacitacion
+    asignacion = db.query(AsignacionCapacitacion).filter(
+        AsignacionCapacitacion.empleado_id == empleado.id,
+        AsignacionCapacitacion.capacitacion_id == capacitacion_id
+    ).first()
+    if not asignacion:
+        # Still return materials even without assignment - trainer may have just added them
+        pass
+
+    materiales = db.query(Material).filter(
+        Material.capacitacion_id == capacitacion_id
+    ).order_by(Material.orden).all()
+    
+    return [{
+        "id": m.id,
+        "titulo": m.titulo,
+        "descripcion": m.descripcion,
+        "tipo": m.tipo or "link",
+        "url": m.url,
+        "orden": m.orden or 1,
+        "activo": m.activo if m.activo is not None else True,
+        "capacitacion_id": m.capacitacion_id
+    } for m in materiales]

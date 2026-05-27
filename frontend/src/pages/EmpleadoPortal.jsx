@@ -371,7 +371,7 @@ export default function EmpleadoPortal() {
 
         <AlertBanner count={pendingCount} onAction={() => setView('trainings')} />
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem', marginBottom: '2.5rem' }}>
+        <div className="kpi-grid-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', marginBottom: '2.5rem' }}>
           <KpiCard 
             label="Pendientes" 
             value={pendingCount} 
@@ -395,7 +395,7 @@ export default function EmpleadoPortal() {
           />
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 320px', gap: '2rem' }}>
+        <div className="actions-grid-row" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 320px', gap: '2rem' }}>
           <section>
             <PendingActionsCard 
               actions={trainings} 

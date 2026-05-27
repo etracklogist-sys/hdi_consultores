@@ -1,9 +1,16 @@
 import { authFetch } from '../utils/apiClient';
+import { authService } from './authService';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
 export const materialService = {
   getMaterialesByCapacitacion: async (capacitacionId) => {
-    const res = await authFetch(`${API_URL}/capacitaciones/${capacitacionId}/materiales`);
+    const user = authService.getCurrentUser();
+    const isEmployee = user?.role === 'empleado_portal';
+    const url = isEmployee 
+      ? `${API_URL}/empleados/me/capacitaciones/${capacitacionId}/materiales`
+      : `${API_URL}/capacitaciones/${capacitacionId}/materiales`;
+    
+    const res = await authFetch(url);
     if (!res.ok) {
       console.warn('Materials endpoint not available, returning empty');
       return [];
