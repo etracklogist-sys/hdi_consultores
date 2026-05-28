@@ -150,12 +150,12 @@ export default function Empleados() {
             <Link to={`/admin/clientes/${filterClienteId}`} style={{color: 'var(--text-light)', textDecoration: 'none', marginBottom: '0.5rem', display: 'inline-block'}}>â† Volver a {filterClienteName || 'Cliente'}</Link>
           )}
           <h2 style={{ margin: 0 }}>
-            {filterClienteName ? `Empleados de ${filterClienteName}` : 'GestiÃ³n de Empleados'}
+            {filterClienteName ? `Empleados de ${filterClienteName}` : 'Gestión de Empleados'}
           </h2>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <button className="btn btn-outline" onClick={() => setIsImportOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            ðŸ“¥ Importar Excel
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Importar Excel
           </button>
           <button className="btn btn-primary" onClick={openCreateModal}>+ Ingresar Empleado</button>
         </div>
@@ -167,7 +167,7 @@ export default function Empleados() {
             <h3 style={{ marginTop: 0 }}>{isEditMode ? 'Editar Empleado' : 'Registrar Empleado a Capacitar'}</h3>
             <form onSubmit={handleSubmit}>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Nombre Completo</label>
-              <input type="text" required value={formData.nombre_completo} onChange={e => setFormData({ ...formData, nombre_completo: e.target.value })} placeholder="Ej: MarÃ­a RodrÃ­guez" />
+              <input type="text" required value={formData.nombre_completo} onChange={e => setFormData({ ...formData, nombre_completo: e.target.value })} placeholder="Ej: María Rodríguez" />
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
@@ -195,7 +195,7 @@ export default function Empleados() {
                   </select>
                 </div>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Ãrea</label>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Área</label>
                   <select value={formData.area_id} onChange={e => setFormData({ ...formData, area_id: e.target.value })}>
                     <option value="">-- No registrada --</option>
                     {areas.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
@@ -245,8 +245,8 @@ export default function Empleados() {
               <th style={{ padding: '1rem' }}>DNI</th>
               <th style={{ padding: '1rem' }}>Empresa</th>
               <th style={{ padding: '1rem' }}>Email</th>
-              <th style={{ padding: '1rem' }}>Ãrea</th>
-              <th style={{ padding: '1rem' }}>Estado MÃ³dulo</th>
+              <th style={{ padding: '1rem' }}>Área</th>
+              <th style={{ padding: '1rem' }}>Estado Módulo</th>
               <th style={{ padding: '1rem' }}>Acciones</th>
             </tr>
           </thead>
