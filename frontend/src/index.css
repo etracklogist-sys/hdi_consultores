@@ -963,12 +963,15 @@ label {
 
 
 /* Search Bar Input Override */
-.search-input {
+input.search-input[type="text"] {
   border: none !important;
   box-shadow: none !important;
   padding: 0.75rem 0.75rem !important;
+  background-color: transparent !important;
 }
-.search-input:focus {
+input.search-input[type="text"]:focus {
   border: none !important;
   box-shadow: none !important;
+  outline: none !important;
+  background-color: transparent !important;
 }
