@@ -212,26 +212,37 @@ export default function Empleados() {
         </div>
       )}
 
-            <div style={{ marginBottom: '1.5rem', position: 'relative' }}>
-        <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+            <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        marginBottom: '1.5rem', 
+        background: 'white', 
+        border: '1px solid var(--border-color)', 
+        borderRadius: '10px',
+        padding: '0 1rem',
+        boxSizing: 'border-box',
+        transition: 'border-color 0.2s'
+      }}>
+        <span style={{ color: 'var(--text-light)', display: 'flex', alignItems: 'center' }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </span>
         <input
           type="text"
           placeholder="Buscar por nombre, DNI o email..."
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
           style={{
-            width: '100%',
-            padding: '0.75rem 1rem 0.75rem 2.75rem',
-            border: '1px solid var(--border-color)',
-            borderRadius: '10px',
+            flex: 1,
+            border: 'none',
+            background: 'transparent',
+            padding: '0.75rem 0.75rem',
             fontSize: '0.95rem',
-            background: 'white',
             outline: 'none',
-            boxSizing: 'border-box'
+            color: 'inherit'
           }}
         />
         {searchTerm && (
-          <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.8rem', color: 'var(--text-light)' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-light)', whiteSpace: 'nowrap' }}>
             {filteredEmpleados.length} resultado{filteredEmpleados.length !== 1 ? 's' : ''}
           </span>
         )}
