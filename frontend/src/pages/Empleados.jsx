@@ -14,6 +14,7 @@ export default function Empleados() {
   const [editId, setEditId] = useState(null);
   const [formData, setFormData] = useState({ nombre_completo: '', email: '', cliente_id: '', dni: '', activo: true, area_id: '' });
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const filterClienteId = searchParams.get('cliente_id');
@@ -105,6 +106,40 @@ export default function Empleados() {
     }
   };
 
+  const handleBaja = async (empleadoId, nombre) => {
+    if (!window.confirm(`¿Estás seguro de dar de baja a ${nombre}? El empleado quedará inactivo y no podrá acceder al portal.`)) return;
+    try {
+      const res = await authFetch(`${API_URL}/empleados/${empleadoId}/baja`, { method: 'PATCH' });
+      if (!res.ok) throw new Error('Error al dar de baja');
+      await fetchData();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleReactivar = async (empleadoId, nombre) => {
+    if (!window.confirm(`¿Reactivar a ${nombre}?`)) return;
+    try {
+      const res = await authFetch(`${API_URL}/empleados/${empleadoId}/reactivar`, {
+        method: 'PATCH',
+      });
+      if (!res.ok) throw new Error('Error al reactivar');
+      await fetchData();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const filteredEmpleados = empleados.filter(emp => {
+    if (!searchTerm.trim()) return true;
+    const term = searchTerm.toLowerCase();
+    return (
+      (emp.nombre_completo || '').toLowerCase().includes(term) ||
+      (emp.dni || '').toLowerCase().includes(term) ||
+      (emp.email || '').toLowerCase().includes(term)
+    );
+  });
+
   const filterClienteName = filterClienteId ? clientes.find(c => c.id === parseInt(filterClienteId))?.razon_social : null;
 
   return (
@@ -177,6 +212,31 @@ export default function Empleados() {
         </div>
       )}
 
+            <div style={{ marginBottom: '1.5rem', position: 'relative' }}>
+        <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '1.1rem', color: 'var(--text-light)' }}>ð</span>
+        <input
+          type="text"
+          placeholder="Buscar por nombre, DNI o email..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          style={{
+            width: '100%',
+            padding: '0.75rem 1rem 0.75rem 2.75rem',
+            border: '1px solid var(--border-color)',
+            borderRadius: '10px',
+            fontSize: '0.95rem',
+            background: 'white',
+            outline: 'none',
+            boxSizing: 'border-box'
+          }}
+        />
+        {searchTerm && (
+          <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.8rem', color: 'var(--text-light)' }}>
+            {filteredEmpleados.length} resultado{filteredEmpleados.length !== 1 ? 's' : ''}
+          </span>
+        )}
+      </div>
+
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead style={{ background: '#f8fafc', borderBottom: '1px solid var(--border-color)' }}>
@@ -191,7 +251,7 @@ export default function Empleados() {
             </tr>
           </thead>
           <tbody>
-            {empleados.length > 0 ? empleados.map(c => (
+            {filteredEmpleados.length > 0 ? filteredEmpleados.map(c => (
               <tr
                 key={c.id}
                 className="clickable-row"
@@ -212,6 +272,11 @@ export default function Empleados() {
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <Link to={`/admin/empleados/${c.id}`} className="btn" style={{ background: '#eee', textDecoration: 'none' }}>Ver Ficha</Link>
                     <button onClick={(e) => { e.stopPropagation(); openEditModal(c); }} className="btn btn-outline" style={{ padding: '0.5rem 1rem' }}>Editar</button>
+                    {c.activo ? (
+                      <button onClick={(e) => { e.stopPropagation(); handleBaja(c.id, c.nombre_completo); }} className="btn" style={{ padding: '0.5rem 1rem', background: '#FEE2E2', color: '#991B1B', border: 'none', fontSize: '0.85rem' }}>Dar de Baja</button>
+                    ) : (
+                      <button onClick={(e) => { e.stopPropagation(); handleReactivar(c.id, c.nombre_completo); }} className="btn" style={{ padding: '0.5rem 1rem', background: '#D1FAE5', color: '#065F46', border: 'none', fontSize: '0.85rem' }}>Reactivar</button>
+                    )}
                   </div>
                 </td>
               </tr>

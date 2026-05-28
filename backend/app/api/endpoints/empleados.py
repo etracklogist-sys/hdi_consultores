@@ -197,6 +197,15 @@ def baja_empleado(empleado_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Empleado dado de baja correctamente"}
 
+@router.patch("/{empleado_id}/reactivar")
+def reactivar_empleado(empleado_id: int, db: Session = Depends(get_db)):
+    empleado = db.query(Empleado).filter(Empleado.id == empleado_id).first()
+    if not empleado:
+        raise HTTPException(status_code=404, detail="Empleado no encontrado")
+    empleado.activo = True
+    db.commit()
+    return {"message": "Empleado reactivado correctamente"}
+
 @router.post("/", response_model=EmpleadoResponse)
 def create_empleado(empleado: EmpleadoCreate, db: Session = Depends(get_db)):
     cliente = db.query(Cliente).filter(Cliente.id == empleado.cliente_id).first()
