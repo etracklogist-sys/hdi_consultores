@@ -406,6 +406,17 @@ export default function PlanAnual() {
           <p style={{color: 'var(--text-light)', margin: '0.5rem 0 0'}}>Cliente: <strong>{cliente?.razon_social}</strong></p>
         </div>
         <div style={{display: 'flex', gap: '0.5rem', alignItems: 'center'}}>
+                    <button
+            className="btn btn-outline"
+            onClick={() => {
+              const url = `${API_URL}/plan-anual/${cliente_id}/${anio}/pdf`;
+              window.open(url, '_blank');
+            }}
+            title="Descargar Plan Anual en PDF"
+            style={{marginRight: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.3rem'}}
+          >
+            📄 PDF
+          </button>
           <button className="btn btn-outline" onClick={() => setAnio(anio - 1)}>◄</button>
           <span style={{fontSize: '1.25rem', fontWeight: 600, padding: '0 1rem'}}>{anio}</span>
           <button className="btn btn-outline" onClick={() => setAnio(anio + 1)}>►</button>
