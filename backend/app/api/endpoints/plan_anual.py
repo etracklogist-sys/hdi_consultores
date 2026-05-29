@@ -1118,3 +1118,242 @@ def quitar_empleado_de_programada(programada_id: int, asignacion_id: int, curren
     db.commit()
     return {"id": asignacion_id, "eliminada": True, "mensaje": "Asignación eliminada"}
 
+
+
+# ═══════════════════════════════════════════════════════════
+# Plan Anual PDF - Executive Summary Download
+# ═══════════════════════════════════════════════════════════
+
+@router.get("/{cliente_id}/{anio}/pdf")
+def descargar_plan_anual_pdf(cliente_id: int, anio: int, current_uid: str = Depends(get_current_user_uid), db: Session = Depends(get_db)):
+    """Generates a professional PDF summary of the annual training plan."""
+    import os as _os
+    from reportlab.lib.utils import ImageReader
+    
+    plan = db.query(PlanAnualCliente).filter(
+        PlanAnualCliente.cliente_id == cliente_id,
+        PlanAnualCliente.anio == anio
+    ).first()
+    
+    cliente = db.query(Cliente).get(cliente_id)
+    if not cliente:
+        raise HTTPException(404, "Cliente no encontrado")
+    
+    programadas = db.query(CapacitacionProgramada).filter(
+        CapacitacionProgramada.cliente_id == cliente_id,
+        CapacitacionProgramada.anio == anio
+    ).all()
+    
+    items = []
+    if plan:
+        for it in plan.items:
+            items.append({
+                "capacitacion_id": it.capacitacion_id,
+                "nombre": it.capacitacion.nombre if it.capacitacion else "Desconocida",
+                "mes": it.mes,
+                "tipo": it.tipo,
+                "activo": it.activo
+            })
+    
+    output = io.BytesIO()
+    doc = SimpleDocTemplate(output, pagesize=A4,
+                            rightMargin=40, leftMargin=40,
+                            topMargin=30, bottomMargin=30)
+    
+    elements = []
+    styles = getSampleStyleSheet()
+    
+    # --- Logo ---
+    logo_path = _os.path.join(_os.path.dirname(__file__), '..', 'static', 'logo_hdi.jpg')
+    if not _os.path.exists(logo_path):
+        logo_path = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'static', 'logo_hdi.jpg')
+    
+    if _os.path.exists(logo_path):
+        try:
+            logo = PlatypusImage(logo_path, width=100, height=80)
+            logo.hAlign = 'LEFT'
+        except:
+            logo = None
+    else:
+        logo = None
+    
+    # --- Header with logo and title side by side ---
+    style_title = ParagraphStyle('PlanTitle', parent=styles['Heading1'],
+        fontSize=20, alignment=TA_CENTER, spaceAfter=4,
+        textColor=colors.HexColor('#1a56a8'))
+    style_subtitle = ParagraphStyle('PlanSubtitle', parent=styles['Normal'],
+        fontSize=12, alignment=TA_CENTER, spaceAfter=2,
+        textColor=colors.HexColor('#334155'))
+    
+    if logo:
+        title_para = Paragraph("PLAN ANUAL DE CAPACITACI\u00d3N", style_title)
+        subtitle_para = Paragraph(f"<b>{cliente.razon_social}</b> \u2014 A\u00f1o {anio}", style_subtitle)
+        
+        header_table = Table(
+            [[logo, [title_para, subtitle_para]]],
+            colWidths=[120, 395]
+        )
+        header_table.setStyle(TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+            ('ALIGN', (1, 0), (1, 0), 'CENTER'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 0),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+        ]))
+        elements.append(header_table)
+    else:
+        elements.append(Paragraph("PLAN ANUAL DE CAPACITACI\u00d3N", style_title))
+        elements.append(Paragraph(f"<b>{cliente.razon_social}</b> \u2014 A\u00f1o {anio}", style_subtitle))
+    
+    elements.append(Spacer(1, 4))
+    
+    # Separator line
+    sep_table = Table([[""]], colWidths=[515])
+    sep_table.setStyle(TableStyle([
+        ('LINEBELOW', (0, 0), (0, 0), 1.5, colors.HexColor('#1a56a8')),
+    ]))
+    elements.append(sep_table)
+    elements.append(Spacer(1, 12))
+    
+    # --- Calendar Grid: 4 columns x 3 rows ---
+    MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+             "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+    
+    style_mes_header = ParagraphStyle('MesHeader', parent=styles['Normal'],
+        fontSize=9, fontName='Helvetica-Bold', textColor=colors.white)
+    style_mes_item = ParagraphStyle('MesItem', parent=styles['Normal'],
+        fontSize=7.5, leading=10, textColor=colors.HexColor('#1e293b'))
+    style_mes_empty = ParagraphStyle('MesEmpty', parent=styles['Normal'],
+        fontSize=7.5, textColor=colors.HexColor('#94a3b8'), fontName='Helvetica-Oblique')
+    
+    current_month = datetime.now().month
+    
+    grid_data = []
+    for row_idx in range(3):
+        row = []
+        for col_idx in range(4):
+            mes_num = row_idx * 4 + col_idx + 1
+            mes_items = [it for it in items if it["mes"] == mes_num and it["activo"]]
+            
+            header_text = MESES[mes_num - 1]
+            
+            cell_parts = [Paragraph(header_text, style_mes_header)]
+            cell_parts.append(Spacer(1, 3))
+            
+            if mes_items:
+                for it in mes_items:
+                    tipo_tag = f"<font color='#1a56a8' size='6'>[{it['tipo'][:3]}]</font>"
+                    cell_parts.append(Paragraph(f"{tipo_tag} {it['nombre']}", style_mes_item))
+            else:
+                cell_parts.append(Paragraph("Sin planificar", style_mes_empty))
+            
+            row.append(cell_parts)
+        grid_data.append(row)
+    
+    col_w = 515 / 4
+    grid_table = Table(grid_data, colWidths=[col_w]*4, rowHeights=[None]*3)
+    
+    grid_style = [
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#cbd5e1')),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('LEFTPADDING', (0, 0), (-1, -1), 5),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+    ]
+    
+    for row_idx in range(3):
+        for col_idx in range(4):
+            mes_num = row_idx * 4 + col_idx + 1
+            bg = '#1a56a8' if mes_num == current_month and anio == datetime.now().year else '#475569'
+            grid_style.append(('BACKGROUND', (col_idx, row_idx), (col_idx, row_idx), colors.HexColor(bg)))
+    
+    grid_table.setStyle(TableStyle(grid_style))
+    
+    section_title = ParagraphStyle('SectionTitle', parent=styles['Heading2'],
+        fontSize=13, textColor=colors.HexColor('#1a56a8'), spaceBefore=6, spaceAfter=8)
+    
+    elements.append(Paragraph("Planificaci\u00f3n Mensual", section_title))
+    elements.append(grid_table)
+    elements.append(Spacer(1, 16))
+    
+    # --- Execution Summary Table ---
+    if programadas:
+        elements.append(Paragraph("Resumen de Ejecuci\u00f3n", section_title))
+        
+        style_table_header = ParagraphStyle('TblHeader', parent=styles['Normal'],
+            fontSize=8, fontName='Helvetica-Bold', textColor=colors.white)
+        style_table_cell = ParagraphStyle('TblCell', parent=styles['Normal'],
+            fontSize=7.5, leading=10)
+        
+        header_row = [
+            Paragraph("Capacitaci\u00f3n", style_table_header),
+            Paragraph("Mes", style_table_header),
+            Paragraph("Tipo", style_table_header),
+            Paragraph("Estado", style_table_header),
+            Paragraph("Asignados", style_table_header),
+            Paragraph("Aprobados", style_table_header),
+            Paragraph("% Avance", style_table_header),
+        ]
+        
+        table_data = [header_row]
+        
+        for p in sorted(programadas, key=lambda x: x.mes):
+            curso = db.query(Capacitacion).get(p.capacitacion_id)
+            asigs = db.query(AsignacionCapacitacion).filter(
+                AsignacionCapacitacion.programada_id == p.id
+            ).all()
+            total_asig = len(asigs)
+            aprobados = len([a for a in asigs if a.estado == 'aprobado'])
+            pct = f"{int(aprobados/total_asig*100)}%" if total_asig > 0 else "\u2014"
+            
+            estado_colors = {
+                'ACTIVA': '#166534', 'FINALIZADA': '#1a56a8',
+                'PROGRAMADA': '#92400e', 'CANCELADA': '#991b1b'
+            }
+            estado_color = estado_colors.get(p.estado, '#334155')
+            
+            row = [
+                Paragraph(curso.nombre if curso else "N/A", style_table_cell),
+                Paragraph(MESES[p.mes - 1][:3], style_table_cell),
+                Paragraph(p.tipo[:4], style_table_cell),
+                Paragraph(f"<font color='{estado_color}'><b>{p.estado}</b></font>", style_table_cell),
+                Paragraph(str(total_asig), style_table_cell),
+                Paragraph(str(aprobados), style_table_cell),
+                Paragraph(pct, style_table_cell),
+            ]
+            table_data.append(row)
+        
+        exec_table = Table(table_data, colWidths=[155, 40, 45, 70, 55, 55, 50])
+        exec_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1a56a8')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('ALIGN', (3, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#cbd5e1')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8fafc')]),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+            ('LEFTPADDING', (0, 0), (-1, -1), 5),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+        ]))
+        elements.append(exec_table)
+    
+    # --- Footer ---
+    elements.append(Spacer(1, 20))
+    footer_style = ParagraphStyle('Footer', parent=styles['Normal'],
+        fontSize=8, textColor=colors.HexColor('#94a3b8'), alignment=TA_CENTER)
+    generated_at = datetime.now().strftime('%d/%m/%Y %H:%M')
+    elements.append(Paragraph(f"Documento generado por HDI Consultores \u2014 {generated_at}", footer_style))
+    elements.append(Paragraph("Seguridad \u00b7 Higiene \u00b7 Medio Ambiente", footer_style))
+    
+    doc.build(elements)
+    
+    pdf_data = output.getvalue()
+    safe_name = cliente.razon_social.replace(' ', '_').replace('"', '')
+    return Response(
+        content=pdf_data,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="PlanAnual_{safe_name}_{anio}.pdf"'}
+    )
+

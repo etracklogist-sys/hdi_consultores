@@ -467,8 +467,8 @@ export default function PlanAnual() {
             return (
               <div key={m} style={{
                 border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.75rem',
-                background: isPast ? '#f1f5f9' : '#f8fafc',
-                opacity: isPast ? 0.7 : 1
+                background: isPast ? '#f8fafc' : '#f8fafc',
+                opacity: 1
               }}>
                 <div style={{display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem', marginBottom: '0.5rem'}}>
                   <strong style={{color: m === currentMonth ? 'var(--primary-color)' : 'var(--text-main)', fontSize: '0.9rem'}}>

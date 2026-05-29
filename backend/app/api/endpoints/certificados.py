@@ -170,15 +170,26 @@ def descargar_pdf_certificado(codigo: str, db: Session = Depends(get_db)):
     c_pdf = canvas.Canvas(buffer, pagesize=landscape(letter))
     width, height = landscape(letter)
     
+    # HDI Logo (top-left corner)
+    import os as _os
+    logo_path = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'static', 'logo_hdi.jpg')
+    if _os.path.exists(logo_path):
+        try:
+            logo_img = ImageReader(logo_path)
+            logo_w, logo_h = 65, 52
+            c_pdf.drawImage(logo_img, 20, height - logo_h - 14, width=logo_w, height=logo_h, preserveAspectRatio=True, mask='auto')
+        except:
+            pass
+    
     # ═══════════════════════════════════════════
     # ZONE 1: Header Banner (top 80pt)
     # ═══════════════════════════════════════════
     c_pdf.setFillColorRGB(0.1, 0.4, 0.8)
-    c_pdf.rect(0, height - 80, width, 80, fill=1, stroke=0)
+    c_pdf.rect(100, height - 80, width - 100, 80, fill=1, stroke=0)
     
     c_pdf.setFillColorRGB(1, 1, 1)
     c_pdf.setFont("Helvetica-Bold", 36)
-    c_pdf.drawCentredString(width / 2.0, height - 55, "CERTIFICADO DE CAPACITACIÓN")
+    c_pdf.drawCentredString((width + 100) / 2.0, height - 55, "CERTIFICADO DE CAPACITACIÓN")
     
     # ═══════════════════════════════════════════
     # ZONE 2: Body Content (y=530 to y=260)
