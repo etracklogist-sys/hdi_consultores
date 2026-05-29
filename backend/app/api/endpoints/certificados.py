@@ -128,6 +128,36 @@ def _draw_signature_block(c_pdf, sig_base64, label, name, block_x, block_y, bloc
     c_pdf.setFillColorRGB(0, 0, 0)
 
 
+
+@router.post("/admin/backfill-firmas")
+def backfill_firma_snapshots(db: Session = Depends(get_db)):
+    """One-time migration: backfill firma_empleado_snapshot and
+    firma_capacitador_snapshot on certificates that are missing them."""
+    from app.models.domain import UsuarioConsultora
+    
+    # Get admin signature for trainer fallback
+    admin_user = db.query(UsuarioConsultora).filter(UsuarioConsultora.firma_base64 != None).first()
+    firma_cap = admin_user.firma_base64 if admin_user else None
+    
+    certs = db.query(Certificado).all()
+    updated = 0
+    for cert in certs:
+        changed = False
+        # Backfill employee signature
+        if not cert.firma_empleado_snapshot and cert.empleado and cert.empleado.firma_base64:
+            cert.firma_empleado_snapshot = cert.empleado.firma_base64
+            changed = True
+        # Backfill trainer/consultant signature
+        if not cert.firma_capacitador_snapshot and firma_cap:
+            cert.firma_capacitador_snapshot = firma_cap
+            changed = True
+        if changed:
+            updated += 1
+    
+    db.commit()
+    return {"message": f"Backfill completed. Updated {updated} certificates out of {len(certs)} total."}
+
+
 @router.get("/{codigo}/pdf")
 def descargar_pdf_certificado(codigo: str, db: Session = Depends(get_db)):
     c = db.query(Certificado).filter(Certificado.hash_verificacion == codigo).first()
@@ -240,10 +270,22 @@ def descargar_pdf_certificado(codigo: str, db: Session = Depends(get_db)):
     emp_block_x = width - (SIG_BLOCK_W * 2) - SIG_GAP - 32
     trainer_block_x = emp_block_x + SIG_BLOCK_W + SIG_GAP
     
+    # Fallback to current signatures if snapshot is empty
+    sig_empleado = c.firma_empleado_snapshot
+    if not sig_empleado and c.empleado and c.empleado.firma_base64:
+        sig_empleado = c.empleado.firma_base64
+        
+    sig_capacitador = c.firma_capacitador_snapshot
+    if not sig_capacitador:
+        from app.models.domain import UsuarioConsultora
+        admin_user = db.query(UsuarioConsultora).filter(UsuarioConsultora.firma_base64 != None).first()
+        if admin_user:
+            sig_capacitador = admin_user.firma_base64
+
     # Draw employee signature block
     _draw_signature_block(
         c_pdf,
-        sig_base64=c.firma_empleado_snapshot,
+        sig_base64=sig_empleado,
         label="Firma del Empleado",
         name=c.empleado.nombre_completo if c.empleado else "N/A",
         block_x=emp_block_x,
@@ -255,7 +297,7 @@ def descargar_pdf_certificado(codigo: str, db: Session = Depends(get_db)):
     # Draw trainer/consultant signature block
     _draw_signature_block(
         c_pdf,
-        sig_base64=c.firma_capacitador_snapshot,
+        sig_base64=sig_capacitador,
         label="Firma del Instructor / Representante",
         name="HDI Certificaciones",
         block_x=trainer_block_x,

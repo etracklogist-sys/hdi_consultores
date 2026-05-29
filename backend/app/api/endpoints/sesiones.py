@@ -220,6 +220,15 @@ def update_participant(sesion_id: int, part_id: int, req: ParticipanteUpdate, db
                 hash_string = f"{part.empleado_id}-att-{part.id}-{datetime.now().timestamp()}"
                 hash_verificacion = hashlib.sha256(hash_string.encode()).hexdigest()
 
+                # Freeze signatures at certificate creation time
+                from app.models.domain import Empleado, UsuarioConsultora
+                empleado_obj = db.query(Empleado).filter(Empleado.id == part.empleado_id).first()
+                firma_empleado = empleado_obj.firma_base64 if empleado_obj else None
+                
+                # Get admin/trainer signature
+                admin_user = db.query(UsuarioConsultora).filter(UsuarioConsultora.firma_base64 != None).first()
+                firma_capacitador = admin_user.firma_base64 if admin_user else None
+
                 certificado = Certificado(
                     empleado_id=part.empleado_id,
                     sesion_participante_id=part.id,
@@ -228,7 +237,9 @@ def update_participant(sesion_id: int, part_id: int, req: ParticipanteUpdate, db
                     capacitacion_id=cap.id,
                     hash_verificacion=hash_verificacion,
                     fecha_vencimiento=vencimiento,
-                    estado="VIGENTE"
+                    estado="VIGENTE",
+                    firma_empleado_snapshot=firma_empleado,
+                    firma_capacitador_snapshot=firma_capacitador
                 )
                 db.add(certificado)
                 db.commit()
