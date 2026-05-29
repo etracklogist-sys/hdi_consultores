@@ -408,9 +408,17 @@ export default function PlanAnual() {
         <div style={{display: 'flex', gap: '0.5rem', alignItems: 'center'}}>
                     <button
             className="btn btn-outline"
-            onClick={() => {
-              const url = `${API_URL}/plan-anual/${cliente_id}/${anio}/pdf`;
-              window.open(url, '_blank');
+            onClick={async () => {
+              try {
+                const res = await authFetch(`${API_URL}/plan-anual/${cliente_id}/${anio}/pdf`);
+                if (!res.ok) throw new Error("Error al descargar PDF");
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                window.open(url, '_blank');
+                setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+              } catch (err) {
+                setNotification({ type: 'error', text: err.message });
+              }
             }}
             title="Descargar Plan Anual en PDF"
             style={{marginRight: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.3rem'}}
