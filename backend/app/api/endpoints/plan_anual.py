@@ -444,6 +444,13 @@ def upsert_plan_anual(cliente_id: int, payload: PlanAnualCreateUpdate, current_u
             # Create fresh — use SAVEPOINT so one failure doesn't kill the entire batch
             savepoint = db.begin_nested()
             try:
+                # If adding a training to a past month, create it directly as FINALIZADA (Historical record)
+                current_m = datetime.now(timezone.utc).month
+                current_y = datetime.now(timezone.utc).year
+                is_historical = (plan.anio < current_y) or (plan.anio == current_y and it.mes < current_m)
+                
+                initial_state = "FINALIZADA" if is_historical else "PROGRAMADA"
+                
                 nueva_prog = CapacitacionProgramada(
                     cliente_id=cliente_id,
                     capacitacion_id=it.capacitacion_id,
@@ -453,12 +460,16 @@ def upsert_plan_anual(cliente_id: int, payload: PlanAnualCreateUpdate, current_u
                     tipo=it.tipo,
                     modalidad_final=modalidad,
                     requiere_evaluacion_final=requiere_eval,
-                    estado="PROGRAMADA"
+                    estado=initial_state
                 )
+                if is_historical:
+                    nueva_prog.fecha_activacion = datetime.now(timezone.utc)
+                    nueva_prog.fecha_cierre = datetime.now(timezone.utc)
+                
                 db.add(nueva_prog)
                 savepoint.commit()
                 creadas += 1
-                logger.info(f"[REGENERATION] Created new programada for {cap.nombre} in month {it.mes}")
+                logger.info(f"[REGENERATION] Created new programada for {cap.nombre} in month {it.mes} (estado={initial_state})")
             except Exception as e:
                 savepoint.rollback()
                 logger.error(f"[REGENERATION] Failed to create programada for {cap.nombre} month {it.mes}: {str(e)}")
