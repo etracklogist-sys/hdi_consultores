@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "hdi_super_secret_jwt_key_changeme_in_production"
     
     # Frontend URL for QR verification links
-    FRONTEND_URL: str = "https://hdiconsultores.vercel.app"
+    FRONTEND_URL: str = "https://hdi-consultores.vercel.app"
 
     # Configuración de entorno
     ENV: str = "development" # o "production"
