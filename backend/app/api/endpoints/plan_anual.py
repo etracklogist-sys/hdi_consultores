@@ -1175,9 +1175,9 @@ def descargar_plan_anual_pdf(cliente_id: int, anio: int, current_uid: str = Depe
     styles = getSampleStyleSheet()
     
     # --- Logo ---
-    logo_path = _os.path.join(_os.path.dirname(__file__), '..', 'static', 'logo_hdi.jpg')
+    logo_path = _os.path.join(_os.path.dirname(__file__), '..', '..', 'static', 'logo_hdi.jpg')
     if not _os.path.exists(logo_path):
-        logo_path = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'static', 'logo_hdi.jpg')
+        logo_path = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', '..', 'static', 'logo_hdi.jpg')
     
     if _os.path.exists(logo_path):
         try:

@@ -172,7 +172,7 @@ def descargar_pdf_certificado(codigo: str, db: Session = Depends(get_db)):
     
     # HDI Logo (top-left corner)
     import os as _os
-    logo_path = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'static', 'logo_hdi.jpg')
+    logo_path = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', '..', 'static', 'logo_hdi.jpg')
     if _os.path.exists(logo_path):
         try:
             logo_img = ImageReader(logo_path)
