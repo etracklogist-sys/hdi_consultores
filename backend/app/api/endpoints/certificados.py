@@ -286,11 +286,11 @@ def descargar_pdf_certificado(codigo: str, db: Session = Depends(get_db)):
     # Thin separator line
     c_pdf.setStrokeColorRGB(0.85, 0.85, 0.85)
     c_pdf.setLineWidth(0.5)
-    c_pdf.line(40, 115, width - 40, 115)
+    c_pdf.line(40, 195, width - 40, 195)
     
     # ── QR Code ──
     VERIF_X = 40
-    VERIF_Y = 30
+    VERIF_Y = 105
     QR_SIZE = 75
     
     qr_data = f"https://planavi.app/verificar/{c.hash_verificacion}"
@@ -326,7 +326,7 @@ def descargar_pdf_certificado(codigo: str, db: Session = Depends(get_db)):
     # ── SIGNATURE BLOCKS ──
     SIG_BLOCK_W = 185
     SIG_BLOCK_H = 80
-    SIG_BLOCK_Y = 30
+    SIG_BLOCK_Y = 100
     SIG_GAP = 30
     
     emp_block_x = width - (SIG_BLOCK_W * 2) - SIG_GAP - 40
