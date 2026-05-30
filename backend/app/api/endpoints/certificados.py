@@ -1,3 +1,4 @@
+from app.core.config import settings
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
@@ -293,7 +294,7 @@ def descargar_pdf_certificado(codigo: str, db: Session = Depends(get_db)):
     VERIF_Y = 105
     QR_SIZE = 75
     
-    qr_data = f"https://planavi.app/verificar/{c.hash_verificacion}"
+    qr_data = f"{settings.FRONTEND_URL}/verificar/{c.hash_verificacion}"
     qr = qrcode.make(qr_data)
     qr_io = io.BytesIO()
     qr.save(qr_io, format="PNG")

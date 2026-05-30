@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     
     # Clave secreta para JWT (cambiar en producción)
     SECRET_KEY: str = "hdi_super_secret_jwt_key_changeme_in_production"
+    
+    # Frontend URL for QR verification links
+    FRONTEND_URL: str = "https://hdiconsultores.vercel.app"
 
     # Configuración de entorno
     ENV: str = "development" # o "production"
