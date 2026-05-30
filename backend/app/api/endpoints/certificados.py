@@ -170,69 +170,128 @@ def descargar_pdf_certificado(codigo: str, db: Session = Depends(get_db)):
     c_pdf = canvas.Canvas(buffer, pagesize=landscape(letter))
     width, height = landscape(letter)
     
-    # HDI Logo (top-left corner)
+    # ── COLOR PALETTE ──
+    BLUE_DARK = (0.06, 0.20, 0.38)    # #0f3460
+    BLUE_MID = (0.10, 0.34, 0.66)     # #1a56a8
+    BLUE_ACCENT = (0.23, 0.51, 0.96)  # #3b82f6
+    GOLD = (0.80, 0.68, 0.36)         # #ccad5c
+    
+    # ── HDI Logo ──
     import os as _os
     logo_path = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', '..', 'static', 'logo_hdi.jpg')
+    
+    # ══════════════════════════════════════════
+    # DECORATIVE FRAME: Double border
+    # ══════════════════════════════════════════
+    # Outer border
+    c_pdf.setStrokeColor(colors.HexColor('#0f3460'))
+    c_pdf.setLineWidth(3)
+    c_pdf.rect(15, 15, width - 30, height - 30, fill=0, stroke=1)
+    
+    # Inner border (gold accent)
+    c_pdf.setStrokeColor(colors.HexColor('#ccad5c'))
+    c_pdf.setLineWidth(1)
+    c_pdf.rect(22, 22, width - 44, height - 44, fill=0, stroke=1)
+    
+    # ══════════════════════════════════════════
+    # HEADER BANNER: Dark blue with gold accent
+    # ══════════════════════════════════════════
+    banner_h = 75
+    banner_y = height - 30 - banner_h
+    
+    # Main banner
+    c_pdf.setFillColorRGB(*BLUE_DARK)
+    c_pdf.rect(22, banner_y, width - 44, banner_h, fill=1, stroke=0)
+    
+    # Gold accent stripe at bottom of banner
+    c_pdf.setFillColorRGB(*GOLD)
+    c_pdf.rect(22, banner_y, width - 44, 3, fill=1, stroke=0)
+    
+    # Logo on banner (left side, white bg area)
     if _os.path.exists(logo_path):
         try:
             logo_img = ImageReader(logo_path)
-            logo_w, logo_h = 65, 52
-            c_pdf.drawImage(logo_img, 20, height - logo_h - 14, width=logo_w, height=logo_h, preserveAspectRatio=True, mask='auto')
+            # Small white rectangle behind logo
+            c_pdf.setFillColor(colors.white)
+            c_pdf.roundRect(30, banner_y + 8, 80, banner_h - 16, 4, fill=1, stroke=0)
+            c_pdf.drawImage(logo_img, 34, banner_y + 12, width=72, height=banner_h - 24, preserveAspectRatio=True, mask='auto')
         except:
             pass
     
-    # ═══════════════════════════════════════════
-    # ZONE 1: Header Banner (top 80pt)
-    # ═══════════════════════════════════════════
-    c_pdf.setFillColorRGB(0.1, 0.4, 0.8)
-    c_pdf.rect(100, height - 80, width - 100, 80, fill=1, stroke=0)
+    # Title text on banner
+    c_pdf.setFillColor(colors.white)
+    c_pdf.setFont("Helvetica-Bold", 32)
+    title_x = (width + 80) / 2.0 if _os.path.exists(logo_path) else width / 2.0
+    c_pdf.drawCentredString(title_x, banner_y + 30, "CERTIFICADO DE CAPACITACI\u00d3N")
     
-    c_pdf.setFillColorRGB(1, 1, 1)
-    c_pdf.setFont("Helvetica-Bold", 36)
-    c_pdf.drawCentredString((width + 100) / 2.0, height - 55, "CERTIFICADO DE CAPACITACIÓN")
+    # ══════════════════════════════════════════
+    # BODY CONTENT
+    # ══════════════════════════════════════════
+    c_pdf.setFillColor(colors.black)
     
-    # ═══════════════════════════════════════════
-    # ZONE 2: Body Content (y=530 to y=260)
-    # ═══════════════════════════════════════════
-    c_pdf.setFillColorRGB(0, 0, 0)
-    c_pdf.setFont("Helvetica", 14)
-    c_pdf.drawCentredString(width / 2.0, height - 120, "Este documento certifica que")
+    body_top = banner_y - 30
     
+    c_pdf.setFont("Helvetica", 13)
+    c_pdf.setFillColorRGB(0.3, 0.3, 0.3)
+    c_pdf.drawCentredString(width / 2.0, body_top, "Este documento certifica que")
+    
+    # Employee name - large and bold
+    c_pdf.setFillColor(colors.black)
     c_pdf.setFont("Helvetica-Bold", 28)
-    c_pdf.drawCentredString(width / 2.0, height - 160, c.empleado.nombre_completo.upper() if c.empleado else "N/A")
+    emp_name = c.empleado.nombre_completo.upper() if c.empleado else "N/A"
+    c_pdf.drawCentredString(width / 2.0, body_top - 42, emp_name)
     
-    c_pdf.setFont("Helvetica", 12)
-    c_pdf.drawCentredString(width / 2.0, height - 190, f"DNI: {c.empleado.dni if c.empleado else 'N/A'} - Empresa: {c.cliente.razon_social if c.cliente else 'N/A'}")
+    # Gold decorative line under name
+    line_w = min(len(emp_name) * 14, 400)
+    line_x = (width - line_w) / 2
+    c_pdf.setStrokeColorRGB(*GOLD)
+    c_pdf.setLineWidth(1.5)
+    c_pdf.line(line_x, body_top - 52, line_x + line_w, body_top - 52)
     
-    c_pdf.setFont("Helvetica", 14)
-    c_pdf.drawCentredString(width / 2.0, height - 230, "ha completado satisfactoriamente el entrenamiento de:")
+    # DNI & Company
+    c_pdf.setFont("Helvetica", 11)
+    c_pdf.setFillColorRGB(0.3, 0.3, 0.3)
+    c_pdf.drawCentredString(width / 2.0, body_top - 72, f"DNI: {c.empleado.dni if c.empleado else 'N/A'}  \u2022  Empresa: {c.cliente.razon_social if c.cliente else 'N/A'}")
     
+    c_pdf.setFont("Helvetica", 13)
+    c_pdf.drawCentredString(width / 2.0, body_top - 102, "ha completado satisfactoriamente el entrenamiento de:")
+    
+    # Course name - prominent
     c_pdf.setFont("Helvetica-Bold", 22)
-    c_pdf.drawCentredString(width / 2.0, height - 270, c.capacitacion.nombre.upper() if c.capacitacion else "N/A")
+    c_pdf.setFillColorRGB(*BLUE_MID)
+    c_pdf.drawCentredString(width / 2.0, body_top - 140, c.capacitacion.nombre.upper() if c.capacitacion else "N/A")
+    
+    c_pdf.setFillColor(colors.black)
     
     # Approval method
     if c.intento_id:
-        resultado_txt = "Aprobado por calificación de evaluación"
+        resultado_txt = "Aprobado por calificaci\u00f3n de evaluaci\u00f3n"
     else:
-        resultado_txt = "Cumplió con los registros de asistencia"
+        resultado_txt = "Cumpli\u00f3 con los registros de asistencia"
 
-    c_pdf.setFont("Helvetica-Oblique", 12)
-    c_pdf.drawCentredString(width / 2.0, height - 300, f"Mecanismo de aprobación: {resultado_txt}")
+    c_pdf.setFont("Helvetica-Oblique", 11)
+    c_pdf.setFillColorRGB(0.35, 0.35, 0.35)
+    c_pdf.drawCentredString(width / 2.0, body_top - 172, f"Mecanismo de aprobaci\u00f3n: {resultado_txt}")
     
     # Dates
-    c_pdf.setFont("Helvetica", 11)
+    c_pdf.setFont("Helvetica", 10)
     emision = c.fecha_emision.strftime('%d/%m/%Y')
     vence = c.fecha_vencimiento.strftime('%d/%m/%Y')
-    c_pdf.drawCentredString(width / 2.0, height - 340, f"Fecha de Emisión: {emision} | Vigente hasta: {vence}")
+    c_pdf.drawCentredString(width / 2.0, body_top - 198, f"Fecha de Emisi\u00f3n: {emision}  |  Vigente hasta: {vence}")
     
-    # ═══════════════════════════════════════════
-    # ZONE 3: Verification Block (bottom-left)
-    # Fixed area: x=30, y=100, w=220, h=120
-    # Contains QR + verification text
-    # ═══════════════════════════════════════════
-    VERIF_X = 30
-    VERIF_Y = 100
-    QR_SIZE = 90
+    # ══════════════════════════════════════════
+    # BOTTOM SECTION: QR + Signatures
+    # ══════════════════════════════════════════
+    
+    # Thin separator line
+    c_pdf.setStrokeColorRGB(0.85, 0.85, 0.85)
+    c_pdf.setLineWidth(0.5)
+    c_pdf.line(40, 115, width - 40, 115)
+    
+    # ── QR Code ──
+    VERIF_X = 40
+    VERIF_Y = 30
+    QR_SIZE = 75
     
     qr_data = f"https://planavi.app/verificar/{c.hash_verificacion}"
     qr = qrcode.make(qr_data)
@@ -242,43 +301,35 @@ def descargar_pdf_certificado(codigo: str, db: Session = Depends(get_db)):
     qr_img = ImageReader(qr_io)
     c_pdf.drawImage(qr_img, VERIF_X, VERIF_Y, width=QR_SIZE, height=QR_SIZE)
     
-    # Verification text (right of QR)
-    text_x = VERIF_X + QR_SIZE + 12
-    c_pdf.setFont("Helvetica-Bold", 7.5)
-    c_pdf.setFillColorRGB(0.2, 0.2, 0.2)
-    c_pdf.drawString(text_x, VERIF_Y + QR_SIZE - 12, "VERIFICACIÓN DIGITAL")
-    c_pdf.setFont("Helvetica", 6.5)
-    c_pdf.drawString(text_x, VERIF_Y + QR_SIZE - 24, "Código de validación SHA-256:")
+    # Verification text
+    text_x = VERIF_X + QR_SIZE + 10
+    c_pdf.setFont("Helvetica-Bold", 7)
+    c_pdf.setFillColorRGB(0.25, 0.25, 0.25)
+    c_pdf.drawString(text_x, VERIF_Y + QR_SIZE - 10, "VERIFICACI\u00d3N DIGITAL")
+    c_pdf.setFont("Helvetica", 6)
+    c_pdf.setFillColorRGB(0.4, 0.4, 0.4)
+    c_pdf.drawString(text_x, VERIF_Y + QR_SIZE - 20, "C\u00f3digo SHA-256:")
     
-    # Split long hash across lines if needed
     hash_str = c.hash_verificacion or ""
-    if len(hash_str) > 40:
-        c_pdf.drawString(text_x, VERIF_Y + QR_SIZE - 35, hash_str[:40])
-        c_pdf.drawString(text_x, VERIF_Y + QR_SIZE - 45, hash_str[40:])
-        c_pdf.drawString(text_x, VERIF_Y + QR_SIZE - 58, "Escanee el QR o visite el portal")
-        c_pdf.drawString(text_x, VERIF_Y + QR_SIZE - 68, "web para verificar vigencia.")
+    if len(hash_str) > 36:
+        c_pdf.drawString(text_x, VERIF_Y + QR_SIZE - 30, hash_str[:36])
+        c_pdf.drawString(text_x, VERIF_Y + QR_SIZE - 39, hash_str[36:])
+        c_pdf.drawString(text_x, VERIF_Y + QR_SIZE - 52, "Escanee el QR o visite el portal")
+        c_pdf.drawString(text_x, VERIF_Y + QR_SIZE - 61, "web para verificar vigencia.")
     else:
-        c_pdf.drawString(text_x, VERIF_Y + QR_SIZE - 35, hash_str)
-        c_pdf.drawString(text_x, VERIF_Y + QR_SIZE - 50, "Escanee el QR o visite el portal")
-        c_pdf.drawString(text_x, VERIF_Y + QR_SIZE - 60, "web para verificar vigencia.")
+        c_pdf.drawString(text_x, VERIF_Y + QR_SIZE - 30, hash_str)
+        c_pdf.drawString(text_x, VERIF_Y + QR_SIZE - 44, "Escanee el QR o visite el portal")
+        c_pdf.drawString(text_x, VERIF_Y + QR_SIZE - 53, "web para verificar vigencia.")
     
-    c_pdf.setFillColorRGB(0, 0, 0)
+    c_pdf.setFillColor(colors.black)
     
-    # ═══════════════════════════════════════════
-    # ZONE 4: Signature Blocks (bottom-right)
-    # Two side-by-side blocks with fixed dimensions
-    # Employee signature: center-right area
-    # Trainer signature: far-right area
-    # ═══════════════════════════════════════════
+    # ── SIGNATURE BLOCKS ──
+    SIG_BLOCK_W = 185
+    SIG_BLOCK_H = 80
+    SIG_BLOCK_Y = 30
+    SIG_GAP = 30
     
-    # Layout constants for signature blocks
-    SIG_BLOCK_W = 200   # Width of each signature block
-    SIG_BLOCK_H = 90    # Height of each signature block
-    SIG_BLOCK_Y = 100   # Bottom of signature blocks
-    SIG_GAP = 30        # Gap between the two blocks
-    
-    # Position blocks: align to the right margin with a 32pt padding
-    emp_block_x = width - (SIG_BLOCK_W * 2) - SIG_GAP - 32
+    emp_block_x = width - (SIG_BLOCK_W * 2) - SIG_GAP - 40
     trainer_block_x = emp_block_x + SIG_BLOCK_W + SIG_GAP
     
     # Fallback to current signatures if snapshot is empty
@@ -293,7 +344,6 @@ def descargar_pdf_certificado(codigo: str, db: Session = Depends(get_db)):
         if admin_user:
             sig_capacitador = admin_user.firma_base64
 
-    # Draw employee signature block
     _draw_signature_block(
         c_pdf,
         sig_base64=sig_empleado,
@@ -305,7 +355,6 @@ def descargar_pdf_certificado(codigo: str, db: Session = Depends(get_db)):
         block_h=SIG_BLOCK_H
     )
     
-    # Draw trainer/consultant signature block
     _draw_signature_block(
         c_pdf,
         sig_base64=sig_capacitador,
