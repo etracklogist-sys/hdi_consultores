@@ -1257,9 +1257,9 @@ def descargar_plan_anual_pdf(cliente_id: int, anio: int, current_uid: str = Depe
     mes_header_style = ParagraphStyle('MesHdr', parent=styles['Normal'],
         fontSize=9, fontName='Helvetica-Bold', textColor=colors.white, leading=12)
     mes_item_style = ParagraphStyle('MesItm', parent=styles['Normal'],
-        fontSize=7.5, leading=10, textColor=colors.HexColor(GRAY_DARK))
+        fontSize=7.5, leading=10, textColor=colors.white)
     mes_empty_style = ParagraphStyle('MesEmp', parent=styles['Normal'],
-        fontSize=7, textColor=colors.HexColor('#cbd5e1'))
+        fontSize=7, textColor=colors.HexColor('#8ba3c4'))
     
     current_month = datetime.now().month
     current_year = datetime.now().year
