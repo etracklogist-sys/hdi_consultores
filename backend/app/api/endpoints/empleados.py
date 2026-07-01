@@ -474,7 +474,62 @@ async def bulk_upload_empleados(
         db.commit()
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Error al guardar en la base de datos: {str(e)}")
+        # Retry one-by-one to skip only the problematic rows
+        created = 0
+        skipped_dup = 0
+        for i, row in enumerate(rows, start=2):
+            try:
+                nombre = row.get(col_map.get("nombre", ""), "").strip()
+                apellido = row.get(col_map.get("apellido", ""), "").strip()
+                dni = row.get(col_map.get("dni", ""), "").strip()
+                email = row.get(col_map.get("email", ""), "").strip()
+                area_name = row.get(col_map.get("area", ""), "").strip()
+                
+                row_empresa_id = cliente_id
+                if not row_empresa_id:
+                    empresa_str = row.get(col_map.get("empresa_id", ""), "").strip()
+                    try:
+                        row_empresa_id = int(float(empresa_str))
+                    except:
+                        continue
+                
+                dni = dni.replace(".", "").replace(" ", "").replace("-", "")
+                if not nombre or not dni:
+                    continue
+                
+                nombre_completo = f"{nombre} {apellido}".strip()
+                
+                existente = db.query(Empleado).filter(
+                    Empleado.dni == dni,
+                    Empleado.cliente_id == row_empresa_id
+                ).first()
+                
+                if existente:
+                    skipped_dup += 1
+                    continue
+                
+                nuevo_emp = Empleado(
+                    nombre_completo=nombre_completo,
+                    apellido=apellido if apellido else None,
+                    dni=dni,
+                    email=email if email else None,
+                    cliente_id=row_empresa_id
+                )
+                
+                if area_name:
+                    area_obj = area_name_map.get(area_name.lower().strip())
+                    if area_obj:
+                        nuevo_emp.areas.append(area_obj)
+                
+                db.add(nuevo_emp)
+                db.flush()
+                created += 1
+            except Exception:
+                db.rollback()
+                skipped_dup += 1
+        
+        db.commit()
+        skipped = skipped_dup
     
     # ── AUTO-ASSIGN: Re-trigger assignments for ACTIVA programadas of affected clients ──
     auto_asignaciones = 0
