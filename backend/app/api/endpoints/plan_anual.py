@@ -444,12 +444,12 @@ def upsert_plan_anual(cliente_id: int, payload: PlanAnualCreateUpdate, current_u
             # Create fresh — use SAVEPOINT so one failure doesn't kill the entire batch
             savepoint = db.begin_nested()
             try:
-                # If adding a training to a past month, create it directly as FINALIZADA (Historical record)
+                # Past month trainings: create as ACTIVA so employees can still take them
                 current_m = datetime.now(timezone.utc).month
                 current_y = datetime.now(timezone.utc).year
-                is_historical = (plan.anio < current_y) or (plan.anio == current_y and it.mes < current_m)
+                is_past = (plan.anio < current_y) or (plan.anio == current_y and it.mes < current_m)
                 
-                initial_state = "FINALIZADA" if is_historical else "PROGRAMADA"
+                initial_state = "ACTIVA" if is_past else "PROGRAMADA"
                 
                 nueva_prog = CapacitacionProgramada(
                     cliente_id=cliente_id,
@@ -462,13 +462,19 @@ def upsert_plan_anual(cliente_id: int, payload: PlanAnualCreateUpdate, current_u
                     requiere_evaluacion_final=requiere_eval,
                     estado=initial_state
                 )
-                if is_historical:
+                if is_past:
                     nueva_prog.fecha_activacion = datetime.now(timezone.utc)
-                    nueva_prog.fecha_cierre = datetime.now(timezone.utc)
                 
                 db.add(nueva_prog)
                 savepoint.commit()
                 creadas += 1
+                
+                # If created as ACTIVA (past month), trigger mass assignments immediately
+                if is_past:
+                    db.refresh(nueva_prog)
+                    past_asignaciones = trigger_asigacion_masiva(db, nueva_prog)
+                    logger.info(f"[REGENERATION] Past-month ACTIVA: assigned {past_asignaciones} employees for {cap.nombre} month {it.mes}")
+                
                 logger.info(f"[REGENERATION] Created new programada for {cap.nombre} in month {it.mes} (estado={initial_state})")
             except Exception as e:
                 savepoint.rollback()
