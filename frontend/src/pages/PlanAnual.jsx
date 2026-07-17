@@ -18,7 +18,7 @@ export default function PlanAnual() {
   const [savedItems, setSavedItems] = useState(null);
   const [savedAt, setSavedAt] = useState(null);
   const [justSaved, setJustSaved] = useState(false);
-  const [activarPasados, setActivarPasados] = useState(false);
+  const [activarItemPasado, setActivarItemPasado] = useState(false);
   const [saving, setSaving] = useState(false);
   const justSavedTimer = useRef(null);
 
@@ -89,8 +89,7 @@ export default function PlanAnual() {
         method: "POST",
         body: JSON.stringify({
           anio, observaciones: data?.observaciones || "",
-          activar_pasados: activarPasados,
-          items: (data?.items || []).map(it => ({ capacitacion_id: it.capacitacion_id, mes: it.mes, tipo: it.tipo, activo: it.activo }))
+          items: (data?.items || []).map(it => ({ capacitacion_id: it.capacitacion_id, mes: it.mes, tipo: it.tipo, activo: it.activo, activar_pasados: it.activar_pasados }))
         })
       });
       if (!res.ok) { const text = await res.text(); throw new Error(`HTTP ${res.status}: ${text}`); }
@@ -122,8 +121,9 @@ export default function PlanAnual() {
     newItems.push({
       capacitacion_id: parseInt(selectedCap),
       nombre_capacitacion: catalogo.find(c => c.id === parseInt(selectedCap))?.nombre || "N/A",
-      mes: selectedMes, tipo: selectedTipo, activo: true
+      mes: selectedMes, tipo: selectedTipo, activo: true, activar_pasados: activarItemPasado
     });
+      setActivarItemPasado(false);
     setData({ ...data, items: newItems });
     setShowItemModal(false);
   };
@@ -471,20 +471,14 @@ export default function PlanAnual() {
               </p>
             )}
           </div>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.75rem' }}>
-              <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(59, 130, 246, 0.05)', padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid rgba(59, 130, 246, 0.1)'}}>
-                <input type="checkbox" id="activarPasados" checked={activarPasados} onChange={e => {setActivarPasados(e.target.checked); setIsDirty(true);}} style={{accentColor: 'var(--primary-color)'}} />
-                <label htmlFor="activarPasados" style={{fontSize: '0.75rem', cursor: 'pointer', margin: 0, userSelect: 'none', color: 'var(--primary-color)', fontWeight: 600}}>Activar auto. meses pasados</label>
-              </div>
-              <button
-                className={`btn ${isDirty ? 'btn-primary' : 'btn-outline'}`}
-                onClick={handleSave}
-                disabled={saving}
-                style={isDirty ? {animation: 'none', fontWeight: 600} : {opacity: 0.6}}
-              >
-                {saving ? 'Guardando...' : isDirty ? '💾 Guardar Plan y Regenerar' : 'Guardar Plan'}
-              </button>
-            </div>
+            <button
+              className={`btn ${isDirty ? 'btn-primary' : 'btn-outline'}`}
+              onClick={handleSave}
+              disabled={saving}
+              style={isDirty ? {animation: 'none', fontWeight: 600} : {opacity: 0.6}}
+            >
+              {saving ? 'Guardando...' : isDirty ? '💾 Guardar Plan y Regenerar' : 'Guardar Plan'}
+            </button>
         </div>
 
         <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginTop: '1rem'}}>
@@ -650,7 +644,13 @@ export default function PlanAnual() {
               <option value="">-- Seleccionar --</option>
               {catalogo.map(c => <option key={c.id} value={c.id}>{c.nombre} ({c.rubro?.nombre || 'General'})</option>)}
             </select>
-            <div style={{display: 'flex', gap: '1rem'}}>
+            {selectedMes < currentMonth && (
+                <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', background: '#f8fafc', padding: '0.5rem', borderRadius: '4px', border: '1px solid #e2e8f0'}}>
+                  <input type="checkbox" id="activarItemPasado" checked={activarItemPasado} onChange={e => setActivarItemPasado(e.target.checked)} />
+                  <label htmlFor="activarItemPasado" style={{fontSize: '0.85rem', cursor: 'pointer', margin: 0, color: 'var(--text-main)'}}>Activar ahora (no guardar como histórico)</label>
+                </div>
+              )}
+              <div style={{display: 'flex', gap: '1rem'}}>
               <button className="btn" onClick={() => setShowItemModal(false)}>Cancelar</button>
               <button className="btn btn-primary" onClick={addItemToPlan}>Añadir al Plan</button>
             </div>

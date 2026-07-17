@@ -36,6 +36,7 @@ class PlanItemCreate(BaseModel):
     mes: int
     tipo: str # ANUAL, COMPLEMENTARIA
     activo: bool = True
+    activar_pasados: bool = False
 
 class ProgramadaUpdate(BaseModel):
     fecha_programada: str | None = None
@@ -46,7 +47,6 @@ class PlanAnualCreateUpdate(BaseModel):
     anio: int
     observaciones: Optional[str] = None
     items: List[PlanItemCreate]
-    activar_pasados: bool = False
 
 class GenerarProgramadasResponse(BaseModel):
     creadas: int
@@ -451,7 +451,7 @@ def upsert_plan_anual(cliente_id: int, payload: PlanAnualCreateUpdate, current_u
                 is_past = (plan.anio < current_y) or (plan.anio == current_y and it.mes < current_m)
                 
                 if is_past:
-                    initial_state = "ACTIVA" if getattr(payload, 'activar_pasados', False) else "FINALIZADA"
+                    initial_state = "ACTIVA" if getattr(it, 'activar_pasados', False) else "FINALIZADA"
                 else:
                     initial_state = "PROGRAMADA"
                 
