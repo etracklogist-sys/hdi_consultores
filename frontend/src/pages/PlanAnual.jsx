@@ -18,6 +18,7 @@ export default function PlanAnual() {
   const [savedItems, setSavedItems] = useState(null);
   const [savedAt, setSavedAt] = useState(null);
   const [justSaved, setJustSaved] = useState(false);
+  const [activarPasados, setActivarPasados] = useState(false);
   const [saving, setSaving] = useState(false);
   const justSavedTimer = useRef(null);
 
@@ -88,6 +89,7 @@ export default function PlanAnual() {
         method: "POST",
         body: JSON.stringify({
           anio, observaciones: data?.observaciones || "",
+          activar_pasados: activarPasados,
           items: (data?.items || []).map(it => ({ capacitacion_id: it.capacitacion_id, mes: it.mes, tipo: it.tipo, activo: it.activo }))
         })
       });

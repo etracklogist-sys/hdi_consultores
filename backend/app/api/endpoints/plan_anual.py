@@ -46,6 +46,7 @@ class PlanAnualCreateUpdate(BaseModel):
     anio: int
     observaciones: Optional[str] = None
     items: List[PlanItemCreate]
+    activar_pasados: bool = False
 
 class GenerarProgramadasResponse(BaseModel):
     creadas: int
@@ -444,12 +445,15 @@ def upsert_plan_anual(cliente_id: int, payload: PlanAnualCreateUpdate, current_u
             # Create fresh — use SAVEPOINT so one failure doesn't kill the entire batch
             savepoint = db.begin_nested()
             try:
-                # Past month trainings: create as ACTIVA so employees can still take them
+                # Past month trainings: create as ACTIVA or FINALIZADA depending on payload
                 current_m = datetime.now(timezone.utc).month
                 current_y = datetime.now(timezone.utc).year
                 is_past = (plan.anio < current_y) or (plan.anio == current_y and it.mes < current_m)
                 
-                initial_state = "ACTIVA" if is_past else "PROGRAMADA"
+                if is_past:
+                    initial_state = "ACTIVA" if getattr(payload, 'activar_pasados', False) else "FINALIZADA"
+                else:
+                    initial_state = "PROGRAMADA"
                 
                 nueva_prog = CapacitacionProgramada(
                     cliente_id=cliente_id,
@@ -470,7 +474,7 @@ def upsert_plan_anual(cliente_id: int, payload: PlanAnualCreateUpdate, current_u
                 creadas += 1
                 
                 # If created as ACTIVA (past month), trigger mass assignments immediately
-                if is_past:
+                if is_past and initial_state == "ACTIVA":
                     db.refresh(nueva_prog)
                     past_asignaciones = trigger_asigacion_masiva(db, nueva_prog)
                     logger.info(f"[REGENERATION] Past-month ACTIVA: assigned {past_asignaciones} employees for {cap.nombre} month {it.mes}")
