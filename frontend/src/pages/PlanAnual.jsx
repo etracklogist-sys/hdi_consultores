@@ -471,10 +471,14 @@ export default function PlanAnual() {
               </p>
             )}
           </div>
-          <button
-            className={`btn ${isDirty ? 'btn-primary' : 'btn-outline'}`}
-            onClick={handleSave}
-            disabled={saving}
+            <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem'}}>
+              <input type="checkbox" id="activarPasados" checked={activarPasados} onChange={e => {setActivarPasados(e.target.checked); setIsDirty(true);}} />
+              <label htmlFor="activarPasados" style={{fontSize: '0.85rem', cursor: 'pointer', margin: 0, userSelect: 'none', color: 'var(--text-light)'}}>Activar inmediatamente cursos de meses pasados (sino quedan como registro)</label>
+            </div>
+            <button
+              className={`btn ${isDirty ? 'btn-primary' : 'btn-outline'}`}
+              onClick={handleSave}
+              disabled={saving}
             style={isDirty ? {animation: 'none', fontWeight: 600} : {opacity: 0.6}}
           >
             {saving ? 'Guardando...' : isDirty ? '💾 Guardar Plan y Regenerar' : 'Guardar Plan'}
