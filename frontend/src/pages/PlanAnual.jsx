@@ -471,18 +471,20 @@ export default function PlanAnual() {
               </p>
             )}
           </div>
-            <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem'}}>
-              <input type="checkbox" id="activarPasados" checked={activarPasados} onChange={e => {setActivarPasados(e.target.checked); setIsDirty(true);}} />
-              <label htmlFor="activarPasados" style={{fontSize: '0.85rem', cursor: 'pointer', margin: 0, userSelect: 'none', color: 'var(--text-light)'}}>Activar inmediatamente cursos de meses pasados (sino quedan como registro)</label>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.75rem' }}>
+              <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(59, 130, 246, 0.05)', padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid rgba(59, 130, 246, 0.1)'}}>
+                <input type="checkbox" id="activarPasados" checked={activarPasados} onChange={e => {setActivarPasados(e.target.checked); setIsDirty(true);}} style={{accentColor: 'var(--primary-color)'}} />
+                <label htmlFor="activarPasados" style={{fontSize: '0.75rem', cursor: 'pointer', margin: 0, userSelect: 'none', color: 'var(--primary-color)', fontWeight: 600}}>Activar auto. meses pasados</label>
+              </div>
+              <button
+                className={`btn ${isDirty ? 'btn-primary' : 'btn-outline'}`}
+                onClick={handleSave}
+                disabled={saving}
+                style={isDirty ? {animation: 'none', fontWeight: 600} : {opacity: 0.6}}
+              >
+                {saving ? 'Guardando...' : isDirty ? '💾 Guardar Plan y Regenerar' : 'Guardar Plan'}
+              </button>
             </div>
-            <button
-              className={`btn ${isDirty ? 'btn-primary' : 'btn-outline'}`}
-              onClick={handleSave}
-              disabled={saving}
-            style={isDirty ? {animation: 'none', fontWeight: 600} : {opacity: 0.6}}
-          >
-            {saving ? 'Guardando...' : isDirty ? '💾 Guardar Plan y Regenerar' : 'Guardar Plan'}
-          </button>
         </div>
 
         <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginTop: '1rem'}}>
