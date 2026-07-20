@@ -436,10 +436,30 @@ def upsert_plan_anual(cliente_id: int, payload: PlanAnualCreateUpdate, current_u
         if programada:
             # Idempotent: Update link + metadata (do NOT change estado if already ACTIVA/FINALIZADA)
             programada.plan_item_id = it.id
+            
+            # Check if user is requesting to activate an existing historical record
+            current_m = datetime.now(timezone.utc).month
+            current_y = datetime.now(timezone.utc).year
+            is_past = (plan.anio < current_y) or (plan.anio == current_y and it.mes < current_m)
+            is_activar_pasado = (it.capacitacion_id, it.mes, it.tipo) in activar_pasados_set
+            
+            was_reactivated = False
+            if is_past and is_activar_pasado and programada.estado == "FINALIZADA":
+                programada.estado = "ACTIVA"
+                programada.fecha_activacion = datetime.now(timezone.utc)
+                was_reactivated = True
+                
             if programada.estado == "PROGRAMADA":
                 programada.modalidad_final = modalidad
                 programada.requiere_evaluacion_final = requiere_eval
             actualizadas += 1
+            
+            if was_reactivated:
+                # Flush the session to get the updated status before mass assignment
+                db.flush()
+                past_asignaciones = trigger_asigacion_masiva(db, programada)
+                logger.info(f"[REGENERATION] Reactivated past-month {programada.id}: assigned {past_asignaciones} employees")
+                
             logger.info(f"[REGENERATION] Updated existing programada {programada.id} (estado={programada.estado}) for {cap.nombre} in month {it.mes}")
         else:
             # Create fresh — use SAVEPOINT so one failure doesn't kill the entire batch
