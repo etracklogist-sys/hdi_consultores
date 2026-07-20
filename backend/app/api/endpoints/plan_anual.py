@@ -451,7 +451,8 @@ def upsert_plan_anual(cliente_id: int, payload: PlanAnualCreateUpdate, current_u
                 is_past = (plan.anio < current_y) or (plan.anio == current_y and it.mes < current_m)
                 
                 if is_past:
-                    initial_state = "ACTIVA" if getattr(it, 'activar_pasados', False) else "FINALIZADA"
+                    is_activar_pasado = (it.capacitacion_id, it.mes, it.tipo) in activar_pasados_set
+                    initial_state = "ACTIVA" if is_activar_pasado else "FINALIZADA"
                 else:
                     initial_state = "PROGRAMADA"
                 
