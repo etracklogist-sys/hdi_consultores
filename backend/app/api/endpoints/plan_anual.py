@@ -408,6 +408,13 @@ def upsert_plan_anual(cliente_id: int, payload: PlanAnualCreateUpdate, current_u
     actualizadas = 0
     errores = []
     
+    # Build set of (capacitacion_id, mes, tipo) that user wants activated for past months
+    activar_pasados_set = set()
+    for p_it in payload.items:
+        if getattr(p_it, 'activar_pasados', False):
+            activar_pasados_set.add((p_it.capacitacion_id, p_it.mes, p_it.tipo))
+    logger.info(f"[REGENERATION] activar_pasados_set = {activar_pasados_set}")
+    
     # Recargamos la lista final (para que tengan su ID)
     items_final = db.query(PlanAnualItem).filter(PlanAnualItem.plan_anual_id == plan.id, PlanAnualItem.activo == True).all()
     
