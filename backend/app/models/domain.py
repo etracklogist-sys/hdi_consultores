@@ -295,3 +295,16 @@ class UsuarioConsultora(Base):
     rol = Column(String(50), default="ADMIN")
     firma_base64 = Column(Text, nullable=True)  # Digital signature image
 
+
+# ⭐ Anonymous Course Reviews ⭐
+
+class ResenaCapacitacion(Base):
+    __tablename__ = "resenas_capacitacion"
+    id = Column(Integer, primary_key=True, index=True)
+    programada_id = Column(Integer, ForeignKey('capacitaciones_programadas.id', ondelete="CASCADE"), nullable=False)
+    estrellas = Column(Integer, nullable=False)  # 1-5
+    comentario = Column(String(500), nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    # NO empleado_id → 100% anónimo
+
+    programada = relationship("CapacitacionProgramada")

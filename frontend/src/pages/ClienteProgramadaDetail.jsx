@@ -19,6 +19,7 @@ export default function ClienteProgramadaDetail() {
   const [showAttendance, setShowAttendance] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [reviews, setReviews] = useState(null);
 
   const loadAll = useCallback(async () => {
     try {
@@ -605,6 +606,45 @@ export default function ClienteProgramadaDetail() {
                 </table>
               )}
             </>
+          )}
+        </div>
+      )}
+
+      {/* Reseñas de la Capacitación */}
+      {reviews && (
+        <div className="card-saas" style={{ marginTop: '2rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <h3 style={{ fontSize: '1.1rem', margin: 0 }}>Reseñas Anónimas ({reviews.total})</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#fffbeb', padding: '0.4rem 0.75rem', borderRadius: '8px', border: '1px solid #fef3c7' }}>
+              <span style={{ fontSize: '1.2rem', color: '#f59e0b' }}>⭐</span>
+              <span style={{ fontWeight: 700, color: '#92400e' }}>{reviews.promedio.toFixed(1)} / 5</span>
+            </div>
+          </div>
+          
+          {reviews.total === 0 ? (
+            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-light)', background: 'var(--bg-main)', borderRadius: '8px' }}>
+              Todavía no hay reseñas para esta capacitación.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {reviews.resenas.map(r => (
+                <div key={r.id} style={{ padding: '1rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <div style={{ color: '#f59e0b', fontSize: '1.1rem', letterSpacing: '2px' }}>
+                      {'⭐'.repeat(r.estrellas)}{'☆'.repeat(5 - r.estrellas)}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>
+                      {new Date(r.fecha).toLocaleDateString()}
+                    </div>
+                  </div>
+                  {r.comentario ? (
+                    <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-main)', lineHeight: '1.5' }}>"{r.comentario}"</p>
+                  ) : (
+                    <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-light)', fontStyle: 'italic' }}>Sin comentario</p>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
         </div>
       )}

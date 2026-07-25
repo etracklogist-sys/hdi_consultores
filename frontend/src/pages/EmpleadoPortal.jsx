@@ -28,7 +28,7 @@ const STATUS_CONFIG = {
 
 export default function EmpleadoPortal() {
   const navigate = useNavigate();
-  const [view, setView] = useState('dashboard'); // 'dashboard', 'trainings', 'certificados', 'materials', 'evaluation', 'result', 'firma'
+  const [view, setView] = useState('dashboard'); // 'dashboard', 'trainings', 'certificados', 'materials', 'evaluation', 'result', 'review', 'firma'
   
   // Data States
   const [trainings, setTrainings] = useState([]);
@@ -45,6 +45,9 @@ export default function EmpleadoPortal() {
   const [selectedOption, setSelectedOption] = useState(null);
   const [evalProgress, setEvalProgress] = useState(null);
   const [finalResult, setFinalResult] = useState(null);
+  const [reviewStars, setReviewStars] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
   
   // Signature state
   const [firma, setFirma] = useState(null);
@@ -660,6 +663,105 @@ export default function EmpleadoPortal() {
     </div>
   );
 
+
+  const handleSubmitReview = async () => {
+    if (reviewStars === 0) return;
+    setActionLoading(true);
+    try {
+      await employeeService.submitResena(activeCourse?.programada_id, reviewStars, reviewComment);
+      setReviewSubmitted(true);
+    } catch (err) {
+      console.error('Review error:', err);
+      // Silent fail - don't block the user
+      setReviewSubmitted(true);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const renderReview = () => (
+    <div style={{ maxWidth: '500px', margin: '0 auto', textAlign: 'center', animation: 'scaleUp 0.5s ease-out' }}>
+       <div className="card-saas" style={{ padding: '3rem 2rem' }}>
+          {!reviewSubmitted ? (
+            <>
+              <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>💬</div>
+              <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>¿Qué te pareció el curso?</h2>
+              <p style={{ color: 'var(--text-light)', marginBottom: '2rem', fontSize: '0.9rem' }}>
+                Tu opinión es anónima y nos ayuda a mejorar.
+              </p>
+              
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
+                {[1, 2, 3, 4, 5].map(star => (
+                  <button 
+                    key={star}
+                    onClick={() => setReviewStars(star)}
+                    style={{
+                      background: 'none', border: 'none', fontSize: '2.5rem', cursor: 'pointer',
+                      transform: reviewStars >= star ? 'scale(1.2)' : 'scale(1)',
+                      transition: 'transform 0.2s ease',
+                      filter: reviewStars >= star ? 'none' : 'grayscale(1) opacity(0.3)'
+                    }}
+                  >⭐</button>
+                ))}
+              </div>
+              
+              {reviewStars > 0 && (
+                <p style={{ color: 'var(--primary-color)', fontWeight: 600, marginBottom: '1.5rem' }}>
+                  {reviewStars === 1 ? 'Malo' : reviewStars === 2 ? 'Regular' : reviewStars === 3 ? 'Bueno' : reviewStars === 4 ? 'Muy bueno' : 'Excelente'}
+                </p>
+              )}
+              
+              <textarea
+                placeholder="Dejá un comentario (opcional)"
+                value={reviewComment}
+                onChange={e => setReviewComment(e.target.value)}
+                maxLength={500}
+                style={{
+                  width: '100%', minHeight: '100px', padding: '1rem', borderRadius: '12px',
+                  border: '1px solid var(--border-color)', fontFamily: 'inherit', fontSize: '0.9rem',
+                  resize: 'vertical', marginBottom: '0.5rem', boxSizing: 'border-box'
+                }}
+              />
+              <p style={{ fontSize: '0.75rem', color: '#94a3b8', textAlign: 'right', marginBottom: '2rem' }}>
+                {reviewComment.length}/500
+              </p>
+              
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button 
+                  className="btn btn-outline" 
+                  style={{ flex: 1, padding: '1rem', borderRadius: '12px' }}
+                  onClick={() => { setView('dashboard'); loadPortalData(); }}
+                >
+                  Omitir
+                </button>
+                <button 
+                  className="btn btn-primary" 
+                  style={{ flex: 1, padding: '1rem', borderRadius: '12px', opacity: reviewStars === 0 ? 0.5 : 1 }}
+                  disabled={reviewStars === 0 || actionLoading}
+                  onClick={handleSubmitReview}
+                >
+                  {actionLoading ? '...' : 'Enviar reseña'}
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🙏</div>
+              <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>¡Gracias por tu opinión!</h2>
+              <p style={{ color: 'var(--text-light)', marginBottom: '2rem' }}>Tu reseña fue enviada de forma anónima.</p>
+              <button 
+                className="btn btn-primary" 
+                style={{ width: '100%', padding: '1rem', fontSize: '1rem', borderRadius: '12px' }}
+                onClick={() => { setView('dashboard'); loadPortalData(); }}
+              >
+                Volver al Dashboard
+              </button>
+            </>
+          )}
+       </div>
+    </div>
+  );
+
   const renderCertificados = () => (
     <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
@@ -767,6 +869,7 @@ export default function EmpleadoPortal() {
       {view === 'materials' && renderMaterials()}
       {view === 'evaluation' && renderEvaluation()}
       {view === 'result' && renderResult()}
+        {view === 'review' && renderReview()}
       {view === 'firma' && renderFirma()}
     </DashboardLayout>
   );

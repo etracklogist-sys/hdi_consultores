@@ -35,7 +35,7 @@ _employee = [Depends(require_employee)]
 
 # Routers
 from app.api.endpoints import (
-    evaluacion, clientes, dashboard, empleados, vencimientos,
+    resenas, evaluacion, clientes, dashboard, empleados, vencimientos,
     auth, rubros, areas, capacitaciones, certificados,
     asignaciones, plan_anual, admin_profile
 )
@@ -63,6 +63,7 @@ app.include_router(admin_profile.router,  prefix=settings.API_V1_STR + "/admin/p
 
 # Certificados: /verificar/{codigo} es público, /admin/list requiere admin
 app.include_router(certificados.router,   prefix=settings.API_V1_STR + "/certificados",   tags=["certificados"])
+app.include_router(resenas.router,        prefix=settings.API_V1_STR + "/resenas",        tags=["resenas"])
 
 
 # --- Startup DB Migration ---
