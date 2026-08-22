@@ -17,6 +17,7 @@ from reportlab.lib.pagesizes import landscape, letter
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.lib.utils import ImageReader
+from reportlab.pdfbase.pdfmetrics import stringWidth
 
 router = APIRouter()
 
@@ -71,15 +72,35 @@ def verificar_certificado(codigo: str, db: Session = Depends(get_db)):
     }
 
 
-def _draw_signature_block(c_pdf, sig_base64, label, name, block_x, block_y, block_w, block_h):
+def _wrap_line(text, font_name, font_size, max_width):
+    """Split one line of text into as many lines as needed so that each
+    rendered line fits within max_width points."""
+    words = text.split()
+    if not words:
+        return []
+    lines = []
+    current = words[0]
+    for word in words[1:]:
+        candidate = current + " " + word
+        if stringWidth(candidate, font_name, font_size) <= max_width:
+            current = candidate
+        else:
+            lines.append(current)
+            current = word
+    lines.append(current)
+    return lines
+
+
+def _draw_signature_block(c_pdf, sig_base64, label, name, block_x, block_y, block_w, block_h, name_size=8):
     """Draw a signature block with fixed dimensions. Signature image is constrained
     inside the block, with label and name text BELOW the signature line.
-    
+
     Layout (top to bottom within block):
       - Signature image area (constrained)
       - Horizontal line
       - Label text
-      - Name text
+      - Name text (supports "\\n" for multiple lines; long lines auto-wrap
+        to the block width so they never overflow the page)
     """
     # Fixed dimensions inside the block
     sig_area_h = block_h - 40  # Reserve 40pt for text below
@@ -122,10 +143,16 @@ def _draw_signature_block(c_pdf, sig_base64, label, name, block_x, block_y, bloc
     center_x = block_x + block_w / 2
     c_pdf.drawCentredString(center_x, line_y - 14, label)
     
-    # Draw name text (below label)
-    c_pdf.setFont("Helvetica", 8)
+    # Draw name text (below label), one centred line at a time
+    c_pdf.setFont("Helvetica", name_size)
     c_pdf.setFillColorRGB(0.3, 0.3, 0.3)
-    c_pdf.drawCentredString(center_x, line_y - 26, name)
+    name_lines = []
+    for raw_line in (name or "").split("\n"):
+        name_lines.extend(_wrap_line(raw_line, "Helvetica", name_size, block_w - 8))
+    text_y = line_y - 26
+    for text_line in name_lines:
+        c_pdf.drawCentredString(center_x, text_y, text_line)
+        text_y -= name_size + 2
     c_pdf.setFillColorRGB(0, 0, 0)
 
 
@@ -360,11 +387,14 @@ def descargar_pdf_certificado(codigo: str, db: Session = Depends(get_db)):
         c_pdf,
         sig_base64=sig_capacitador,
         label="Firma del Instructor / Representante",
-        name="HDI Consultores\nCol. Prof. Seg. e Hig. Prov. Bs As - LHS-004308 PBA\nCOPIME - L002175",
+        name="HDI Consultores\n"
+             "Colegio Profesional de Seguridad e Higiene de la Provincia de Buenos Aires - LHS-004308 PBA\n"
+             "COPIME - L002175",
         block_x=trainer_block_x,
         block_y=SIG_BLOCK_Y,
         block_w=SIG_BLOCK_W,
-        block_h=SIG_BLOCK_H
+        block_h=SIG_BLOCK_H,
+        name_size=7
     )
     
     c_pdf.showPage()
