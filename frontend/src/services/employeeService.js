@@ -31,13 +31,6 @@ const fetchWithAuth = async (url, options = {}) => {
     }
     throw err;
   }
-  // ⭐ Anonymous Course Reviews ⭐
-  submitResena: async (programadaId, estrellas, comentario) => {
-    return await fetchWithAuth(`${API_URL}/resenas/`, {
-      method: 'POST',
-      body: JSON.stringify({ programada_id: programadaId, estrellas, comentario: comentario || null })
-    });
-  },
 };
 
 export const employeeService = {
@@ -116,7 +109,7 @@ export const employeeService = {
   },
   getFirma: async () => {
     return await fetchWithAuth(`${API_URL}/empleados/me/firma`);
-  }
+  },
   // ⭐ Anonymous Course Reviews ⭐
   submitResena: async (programadaId, estrellas, comentario) => {
     return await fetchWithAuth(`${API_URL}/resenas/`, {
