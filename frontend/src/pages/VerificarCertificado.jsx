@@ -89,6 +89,14 @@ export default function VerificarCertificado() {
                   </div>
                 </div>
 
+                <div style={{marginTop: '1rem', paddingTop: '1.5rem', borderTop: '1px dashed var(--border-color)', textAlign: 'center'}}>
+                  <img src="/firma_instructor.png" alt="Firma del Instructor / Representante" style={{height: '95px', objectFit: 'contain', marginBottom: '0.5rem'}} />
+                  <div style={{fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--text-light)', fontWeight: 600, marginBottom: '0.2rem'}}>Instructor / Representante</div>
+                  <div style={{fontWeight: 700, color: 'var(--text-dark)'}}>HDI Consultores</div>
+                  <div style={{fontSize: '0.8rem', color: 'var(--text-light)', marginTop: '0.25rem'}}>Colegio Profesional de Seguridad e Higiene de la Provincia de Buenos Aires - LHS-004308 PBA</div>
+                  <div style={{fontSize: '0.8rem', color: 'var(--text-light)'}}>COPIME - L002175</div>
+                </div>
+
                 <div style={{marginTop: '1.5rem', background: '#f8fafc', padding: '1rem', borderRadius: '8px', wordBreak: 'break-all'}}>
                   <div style={{fontSize: '0.75rem', color: 'var(--text-light)', marginBottom: '0.25rem', textTransform: 'uppercase', fontWeight: 600}}>Hash Criptográfico SHA-256</div>
                   <code style={{fontSize: '0.8rem', color: 'var(--text-dark)', fontFamily: 'monospace'}}>{data.hash_verificacion}</code>
