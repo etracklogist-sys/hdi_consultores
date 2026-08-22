@@ -360,7 +360,7 @@ def descargar_pdf_certificado(codigo: str, db: Session = Depends(get_db)):
         c_pdf,
         sig_base64=sig_capacitador,
         label="Firma del Instructor / Representante",
-        name="HDI Consultores | Mat. PBA LHS-004308 | COPIME L002175",
+        name="HDI Consultores\nCol. Prof. Seg. e Hig. Prov. Bs As - LHS-004308 PBA\nCOPIME - L002175",
         block_x=trainer_block_x,
         block_y=SIG_BLOCK_Y,
         block_w=SIG_BLOCK_W,
