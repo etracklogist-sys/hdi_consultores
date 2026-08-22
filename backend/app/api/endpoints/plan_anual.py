@@ -857,9 +857,20 @@ def export_programada_acta_pdf(programada_id: int, current_uid: str = Depends(ge
     cliente = db.query(Cliente).get(prog.cliente_id)
     curso = db.query(Capacitacion).get(prog.capacitacion_id)
     
-    # Extract Trainer Signature
-    admin_user = db.query(UsuarioConsultora).filter(UsuarioConsultora.firma_base64 != None).first()
-    trainer_sig = admin_user.firma_base64 if admin_user else None
+    # Firma del instructor: imagen oficial fija (firma + sello de Hernán Isotti)
+    # incluida en la app. Si el archivo falta, se usa la firma cargada por el admin.
+    import os as _os
+    trainer_sig = None
+    _firma_path = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', '..', 'static', 'firma_instructor.png')
+    if _os.path.exists(_firma_path):
+        try:
+            with open(_firma_path, 'rb') as _f:
+                trainer_sig = base64.b64encode(_f.read()).decode()
+        except Exception:
+            trainer_sig = None
+    if not trainer_sig:
+        admin_user = db.query(UsuarioConsultora).filter(UsuarioConsultora.firma_base64 != None).first()
+        trainer_sig = admin_user.firma_base64 if admin_user else None
     
     output = io.BytesIO()
     # A4 landscape for wide tables

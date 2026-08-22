@@ -365,7 +365,19 @@ def descargar_pdf_certificado(codigo: str, db: Session = Depends(get_db)):
     if not sig_empleado and c.empleado and c.empleado.firma_base64:
         sig_empleado = c.empleado.firma_base64
         
-    sig_capacitador = c.firma_capacitador_snapshot
+    # Firma del instructor: imagen oficial fija (firma + sello de Hernán Isotti)
+    # incluida en la app. Si el archivo falta, se usa el comportamiento anterior
+    # (snapshot del certificado / firma cargada por el admin).
+    sig_capacitador = None
+    firma_instructor_path = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', '..', 'static', 'firma_instructor.png')
+    if _os.path.exists(firma_instructor_path):
+        try:
+            with open(firma_instructor_path, 'rb') as _f:
+                sig_capacitador = base64.b64encode(_f.read()).decode()
+        except Exception:
+            sig_capacitador = None
+    if not sig_capacitador:
+        sig_capacitador = c.firma_capacitador_snapshot
     if not sig_capacitador:
         from app.models.domain import UsuarioConsultora
         admin_user = db.query(UsuarioConsultora).filter(UsuarioConsultora.firma_base64 != None).first()
@@ -393,7 +405,7 @@ def descargar_pdf_certificado(codigo: str, db: Session = Depends(get_db)):
         block_x=trainer_block_x,
         block_y=SIG_BLOCK_Y,
         block_w=SIG_BLOCK_W,
-        block_h=SIG_BLOCK_H,
+        block_h=SIG_BLOCK_H + 15,  # más alto para que la firma con sello se vea bien
         name_size=7
     )
     

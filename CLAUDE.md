@@ -12,6 +12,7 @@ Sistema de capacitaciones (LMS) para HDI Consultores, cliente de eTrack. Desarro
 
 - Certificado individual: `backend/app/api/endpoints/certificados.py` (reportlab, endpoint `/{codigo}/pdf`). Ojo: `drawCentredString` no soporta `\n`; para texto multilínea usar el helper `_draw_signature_block` / `_wrap_line`.
 - Acta de capacitación y documentos del plan anual: `backend/app/api/endpoints/plan_anual.py` (reportlab Platypus, `Paragraph`).
+- La firma del instructor es una imagen fija (firma + sello de Hernán Isotti): `backend/app/static/firma_instructor.png`. Se usa en certificado y acta; si el archivo falta, se cae a la firma cargada en el perfil del admin.
 
 ## Datos fijos que NO se inventan ni se abrevian
 
