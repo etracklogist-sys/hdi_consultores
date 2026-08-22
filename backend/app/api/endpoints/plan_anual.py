@@ -893,7 +893,9 @@ def export_programada_acta_pdf(programada_id: int, current_uid: str = Depends(ge
          Paragraph("<b>Estado:</b>", style_bold), prog.estado],
         [Paragraph("<b>Tipo:</b>", style_bold), prog.tipo, 
          Paragraph("<b>Fecha de Emisión del Acta:</b>", style_bold), datetime.now().strftime('%d/%m/%Y %H:%M')],
-        [Paragraph("<b>Responsable / Instructor:</b>", style_bold), "HDI Consultores", "", ""]
+        [Paragraph("<b>Responsable / Instructor:</b>", style_bold), "HDI Consultores", "", ""],
+        [Paragraph("<b>Matr\u00edcula PBA:</b>", style_bold), "Colegio Prof. de Seg. e Higiene de la Prov. de Buenos Aires \u2013 LHS-004308",
+         Paragraph("<b>Matr\u00edcula CABA:</b>", style_bold), "COPIME \u2013 L002175"]
     ]
     
     t_header = Table(header_data, colWidths=[1.5*inch, 3*inch, 2*inch, 2*inch])
@@ -1029,7 +1031,7 @@ def export_programada_acta_pdf(programada_id: int, current_uid: str = Depends(ge
     # --- Trainer Signature at the bottom ---
     elements.append(Spacer(1, 40))
     trainer_img = _create_platypus_image(trainer_sig, 2.5*inch, 1.2*inch)
-    trainer_info = Paragraph("<b>HDI Consultores</b><br/>Instructor / Representante", ParagraphStyle('CenterBold', parent=style_normal, alignment=TA_CENTER))
+    trainer_info = Paragraph("<b>HDI Consultores</b><br/>Instructor / Representante<br/><font size=7>Col. Prof. Seg. e Higiene Prov. Bs. As. \u2013 LHS-004308 PBA</font><br/><font size=7>COPIME \u2013 L002175</font>", ParagraphStyle('CenterBold', parent=style_normal, alignment=TA_CENTER))
     
     trainer_table = Table([[trainer_img], [trainer_info]], colWidths=[3*inch])
     trainer_table.setStyle(TableStyle([
