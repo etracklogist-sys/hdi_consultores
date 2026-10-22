@@ -5,11 +5,31 @@ from app.models.domain import Empleado, UsuarioConsultora
 from app.core.security import create_access_token
 from pydantic import BaseModel
 import bcrypt
+import re
 
 router = APIRouter()
 
 def verify_password(plain: str, hashed: str) -> bool:
     return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
+
+
+def _dni_normalizado(valor) -> str:
+    """DNI sin puntos, espacios, guiones ni otros separadores (incluidos los invisibles)."""
+    limpio = re.sub(r"[^0-9A-Za-z]", "", str(valor or "")).upper()
+    return limpio.lstrip("0") if limpio.isdigit() else limpio
+
+
+def _buscar_por_dni_normalizado(db: Session, dni: str, empresa_id: int | None):
+    """Busca el DNI ignorando el formato. El alta manual guarda el DNI tal cual se escribió
+    (por ejemplo 18.375.057) y el empleado puede escribirlo con puntos o espacios."""
+    buscado = _dni_normalizado(dni)
+    if len(buscado) < 3:
+        return []
+    # Filtro grueso en la base: los últimos 3 caracteres quedan siempre juntos, aun con puntos.
+    query = db.query(Empleado).filter(Empleado.dni.like(f"%{buscado[-3:]}%"))
+    if empresa_id:
+        query = query.filter(Empleado.cliente_id == int(empresa_id))
+    return [e for e in query.all() if _dni_normalizado(e.dni) == buscado]
 
 # ─── Schemas ────────────────────────────────────────────────
 
@@ -33,6 +53,10 @@ def dni_access(req: DniAccessRequest, db: Session = Depends(get_db)):
         query = query.filter(Empleado.cliente_id == int(req.empresa_id))
         
     empleados = query.all()
+
+    if not empleados:
+        # Sin coincidencia exacta: se compara ignorando puntos, espacios y guiones.
+        empleados = _buscar_por_dni_normalizado(db, input_dni, req.empresa_id)
 
     if not empleados:
         raise HTTPException(status_code=401, detail="DNI incorrecto o no registrado")
